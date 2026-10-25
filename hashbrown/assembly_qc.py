@@ -3,7 +3,6 @@
 import csv
 import glob
 import gzip
-import io
 import os
 import subprocess
 from concurrent import futures
@@ -119,77 +118,42 @@ class AssemblyQcMethods:
         return sample, output_bam
 
     @staticmethod
-    def map_minimap2_parallel(sample_dict, output_folder, read_type, cpu, parallel):
-        Methods.make_folder(output_folder)
-
-        with futures.ThreadPoolExecutor(max_workers=int(parallel)) as executor:
-            args = ((sample, sample_obj, read_type, output_folder, max(1, int(cpu / parallel)))
-                    for sample, sample_obj in sample_dict.items())
-            for sample, bam in executor.map(lambda x: AssemblyQcMethods.map_minimap2(*x), args):
-                sample_dict[sample].bam.raw = bam
-
-    @staticmethod
-    def run_qualimap(sample, sample_obj, output_folder, cpu, mem):
-        bam = sample_obj.bam.raw
-        if bam:  # no bam file: skip this step
-            sample_subfolder = os.path.join(output_folder, sample)
-            Methods.make_folder(sample_subfolder)
-
-            cmd = ['qualimap', 'bamqc',
-                   '-bam', bam,
-                   f'--java-mem-size={mem}G',
-                   '-nt', str(cpu),
-                   '-outdir', sample_subfolder,
-                   '-outformat', 'HTML']
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-
-            # Rename the html report after the sample
-            report = os.path.join(sample_subfolder, 'qualimapReport.html')
-            if os.path.exists(report):
-                os.rename(report, os.path.join(sample_subfolder, sample + '.html'))
-
-        # The bam was only needed for Qualimap
-        for ext in ('.bam', '.bam.bai', '.bai'):
-            leftover = os.path.join(output_folder, sample + ext)
-            if os.path.exists(leftover):
-                os.remove(leftover)
-
-    @staticmethod
-    def run_qualimap_parallel(sample_dict, output_folder, cpu, mem, parallel):
-        Methods.make_folder(output_folder)
-
-        with futures.ThreadPoolExecutor(max_workers=int(parallel)) as executor:
-            args = ((sample, sample_obj, output_folder, max(1, int(cpu / parallel)),
-                     max(1, int(mem / parallel)))
-                    for sample, sample_obj in sample_dict.items())
-            for _ in executor.map(lambda x: AssemblyQcMethods.run_qualimap(*x), args):
-                pass
-
-    @staticmethod
-    def read_coverage(sample, sample_obj, read_type, output_folder, cpu):
-        """Average depth of the reads of that type over the best assembly."""
+    def mapping_qc(sample, sample_obj, read_type, output_folder, cpu):
+        """Map the reads once, then flagstat (mapping QC) and mosdepth (depth); returns the mean depth."""
         sample, bam = AssemblyQcMethods.map_minimap2(sample, sample_obj, read_type, output_folder, cpu)
         if not bam:
             return sample, 'NA'
 
-        cmd_cov = ['samtools', 'depth', bam]
-        p = subprocess.Popen(cmd_cov, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        total, positions = 0, 0
-        for line in io.TextIOWrapper(p.stdout, encoding='utf-8'):
-            total += int(line.split('\t')[2])
-            positions += 1
-        p.wait()
+        # Mapping QC
+        with open(os.path.join(output_folder, sample + '.flagstat.txt'), 'w') as f:
+            subprocess.run(['samtools', 'flagstat', bam], stdout=f, stderr=subprocess.DEVNULL)
 
-        # The bam was only needed for the depth
-        for ext in ('.bam', '.bam.bai', '.bai'):
+        # Depth per contig and overall (writes <sample>.mosdepth.summary.txt)
+        prefix = os.path.join(output_folder, sample)
+        cmd_mosdepth = ['mosdepth', '-x', '-n', '-t', str(cpu), prefix, bam]
+        subprocess.run(cmd_mosdepth, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+
+        # The overall mean is on the "total" row of the summary
+        avg_cov = 0
+        summary = prefix + '.mosdepth.summary.txt'
+        if os.path.exists(summary):
+            with open(summary) as f:
+                for line in f:
+                    fields = line.split('\t')
+                    if fields[0] == 'total':
+                        avg_cov = round(float(fields[3]))
+
+        # The bam and mosdepth working files were only needed here
+        for ext in ('.bam', '.bam.bai', '.bai', '.mosdepth.global.dist.txt'):
             leftover = os.path.join(output_folder, sample + ext)
             if os.path.exists(leftover):
                 os.remove(leftover)
 
-        return sample, round(total / positions) if positions else 0
+        return sample, avg_cov
 
     @staticmethod
-    def read_coverage_parallel(sample_dict, output_folder, read_type, cpu, parallel):
+    def mapping_qc_parallel(sample_dict, output_folder, read_type, cpu, parallel):
+        """Per sample: flagstat + mosdepth reports, plus one coverage table for the run."""
         Methods.make_folder(output_folder)
         cov_file = os.path.join(output_folder,
                                 ('long' if read_type == 'nanopore' else 'short') + '_read_cov.tsv')
@@ -198,7 +162,7 @@ class AssemblyQcMethods:
         with futures.ThreadPoolExecutor(max_workers=int(parallel)) as executor:
             args = ((sample, sample_obj, read_type, output_folder, max(1, int(cpu / parallel)))
                     for sample, sample_obj in sample_dict.items())
-            for sample, avg_cov in executor.map(lambda x: AssemblyQcMethods.read_coverage(*x), args):
+            for sample, avg_cov in executor.map(lambda x: AssemblyQcMethods.mapping_qc(*x), args):
                 rows.append({'Sample': sample, 'AverageCoverage': avg_cov})
 
         with open(cov_file, 'w', newline='') as f:

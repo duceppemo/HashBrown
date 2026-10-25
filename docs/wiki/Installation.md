@@ -16,7 +16,7 @@ hashbrown --version
 ```
 
 `environment.yml` installs every program the three pipelines use. If you only ever assemble short reads,
-you can trim it down to `skesa`/`spades`, `fastp`, `samtools`, `minimap2`, `quast`, `qualimap` and
+you can trim it down to `skesa`/`spades`, `fastp`, `samtools`, `minimap2`, `quast`, `mosdepth` and
 `bandage`.
 
 ## Without installing

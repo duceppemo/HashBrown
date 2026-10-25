@@ -8,7 +8,7 @@ hashbrown/            the package
 ├── methods.py        input discovery, Sample, resource checks, small file utilities
 ├── nanopore.py       Porechop, Filtlong, Flye, Shasta, Medaka
 ├── illumina.py       fastp, SKESA, SPAdes, Polypolish, pyPOLCA
-└── assembly_qc.py    minimap2 mapping, Qualimap, QUAST, nucmer dot plots, coverage
+└── assembly_qc.py    minimap2 mapping, flagstat + mosdepth QC, QUAST, nucmer dot plots
 tests/                pytest suite; conftest.py stubs every external program
 validation/           polisher benchmark against a gold standard
 docs/wiki/            these pages (published by .github/workflows/wiki.yml)

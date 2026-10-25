@@ -31,7 +31,7 @@ polishing.
 
 **Out of memory.**
 Lower `-p` (samples in parallel) before lowering `-m`: each parallel sample multiplies the footprint.
-SPAdes and Qualimap split `-m` across the parallel samples; SKESA takes it per sample.
+SPAdes splits `-m` across the parallel samples; SKESA takes it per sample.
 
 **Where is the final assembly?**
 The deepest folder that exists for the sample: `6_polished_short/`, else `4_polished_long/`, else

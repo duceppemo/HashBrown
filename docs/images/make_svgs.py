@@ -100,9 +100,9 @@ def pipeline():
     parts.append(arrow(290, 145, 658, 116, t))
 
     # QC box spanning both lanes
-    parts.append(box(662, 70, 150, 60, 'QC', 'QUAST · Qualimap ·', t))
+    parts.append(box(662, 70, 150, 60, 'QC', 'QUAST · flagstat ·', t))
     parts.append(f'<text x="737" y="124" font-size="11" text-anchor="middle" fill="{t["muted"]}">'
-                 f'dot plots · coverage · graphs</text>')
+                 f'mosdepth · dot plots · graphs</text>')
 
     return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 830 190" width="830" height="190"
   font-family="{FONT}">

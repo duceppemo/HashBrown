@@ -38,7 +38,7 @@ Give long reads (`-l`), short reads (`-s`), or both; the pipeline follows the in
 | `--ion-torrent` | off | the short reads are Ion Torrent data (SPAdes only) |
 | `-t, --threads` | all | total threads |
 | `-p, --parallel` | 2 | samples processed at once (each gets `threads / parallel`) |
-| `-m, --memory` | 85% of RAM | memory in GB (SKESA, SPAdes, Qualimap) |
+| `-m, --memory` | 85% of RAM | memory in GB (SKESA, SPAdes) |
 
 Pick the Medaka model that matches your flowcell and basecaller: `hashbrown --list-models`.
 

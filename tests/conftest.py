@@ -142,12 +142,14 @@ STUBS = {
     esac
     exit 0
     ''',
-    'qualimap': '''
-    out=""; prev=""
-    for a in "$@"; do [ "$prev" = "-outdir" ] && out=$a; prev=$a; done
-    if [ -z "$out" ]; then echo "QualiMap v.2.2.2"; exit 0; fi
-    mkdir -p "$out"
-    echo report > "$out/qualimapReport.html"
+    'mosdepth': '''
+    if [ "$1" = "--version" ]; then echo "mosdepth 0.3.11"; exit 0; fi
+    prefix=""
+    for a in "$@"; do prefix=$prev; prev=$a; done
+    printf 'chrom\tlength\tbases\tmean\tmin\tmax\n' > "$prefix.mosdepth.summary.txt"
+    printf 'contig_1\t12\t120\t10.00\t10\t10\n' >> "$prefix.mosdepth.summary.txt"
+    printf 'total\t12\t120\t10.00\t10\t10\n' >> "$prefix.mosdepth.summary.txt"
+    : > "$prefix.mosdepth.global.dist.txt"
     ''',
     'quast.py': '''
     out=""; prev=""

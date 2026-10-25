@@ -46,7 +46,7 @@ class Methods:
 
     # External programs each part of the pipeline needs on the PATH
     dependencies = {
-        'always': ['samtools', 'minimap2', 'quast.py', 'qualimap'],
+        'always': ['samtools', 'minimap2', 'quast.py', 'mosdepth'],
         'long': ['seqtk', 'nucmer', 'mummerplot', 'gnuplot'],
         'trim_long': ['porechop'],
         'filter_long': ['filtlong'],
@@ -134,7 +134,7 @@ class Methods:
             'Minimap2': ['minimap2', '--version'],
             'Seqtk': ['seqtk'],
             'QUAST': ['quast.py', '--version'],
-            'Qualimap': ['qualimap', '--help'],
+            'mosdepth': ['mosdepth', '--version'],
             'MUMmer (nucmer)': ['nucmer', '--version'],
             'Bandage': ['Bandage', '--version'],
         }

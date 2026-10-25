@@ -13,8 +13,8 @@
 HashBrown assembles bacterial genomes from whatever reads you have: Nanopore long reads, Illumina (or
 Ion Torrent) short reads, or both. With long reads it assembles with Flye or Shasta and polishes with
 Medaka; add short reads and they polish the assembly further (Polypolish, then pyPOLCA `--careful`); with
-short reads alone it assembles with SKESA or SPAdes. Every run ends with QC: QUAST metrics, Qualimap
-mapping reports, read coverage, assembly graphs, and before/after polishing dot plots.
+short reads alone it assembles with SKESA or SPAdes. Every run ends with QC: QUAST metrics, mapping QC
+(samtools flagstat), read depth (mosdepth), assembly graphs, and before/after polishing dot plots.
 
 Like its namesake — shredded potatoes pressed into one piece — HashBrown presses reads into one assembly.
 It merges and supersedes [BGA](https://github.com/duceppemo/BGA) and
@@ -22,7 +22,7 @@ It merges and supersedes [BGA](https://github.com/duceppemo/BGA) and
 conflicted with the short-read tools; one conda environment now covers everything.
 
 <p align="center">
-  <img src="docs/images/pipeline.svg" alt="Long reads: prepare (Porechop, Filtlong), assemble (Flye or Shasta), polish (Medaka), then polish with short reads (Polypolish, pyPOLCA). Short reads alone: trim (fastp), assemble (SKESA or SPAdes). Both end in QC (QUAST, Qualimap, dot plots, coverage, graphs)." width="860">
+  <img src="docs/images/pipeline.svg" alt="Long reads: prepare (Porechop, Filtlong), assemble (Flye or Shasta), polish (Medaka), then polish with short reads (Polypolish, pyPOLCA). Short reads alone: trim (fastp), assemble (SKESA or SPAdes). Both end in QC (QUAST, flagstat, mosdepth, dot plots, graphs)." width="860">
 </p>
 
 ## Quick start
@@ -65,7 +65,7 @@ in [`docs/wiki`](docs/wiki):
 
 If HashBrown is useful in your work, please cite this repository (see [`CITATION.cff`](CITATION.cff)) and
 the programs it runs: Flye or Shasta, Medaka, Porechop, Filtlong, SKESA or SPAdes, fastp, Polypolish,
-pyPOLCA, BWA, minimap2, SAMtools, QUAST, Qualimap, MUMmer and Bandage
+pyPOLCA, BWA, minimap2, SAMtools, QUAST, mosdepth, MUMmer and Bandage
 ([references](https://github.com/duceppemo/HashBrown/wiki/Methods#references)).
 
 ## License

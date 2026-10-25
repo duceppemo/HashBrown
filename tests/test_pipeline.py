@@ -36,12 +36,13 @@ def test_hybrid_pipeline(stub_bin, fastq_gz, tmp_path):
 
     # QC
     assert (qc / 'quast' / 'report.tsv').is_file()
-    assert (qc / 'qualimap_long_reads' / 'sample1' / 'sample1.html').is_file()
-    assert (qc / 'qualimap_short_reads' / 'sample1' / 'sample1.html').is_file()
+    assert (qc / 'mapping_qc_long_reads' / 'sample1.flagstat.txt').is_file()
+    assert (qc / 'mapping_qc_long_reads' / 'sample1.mosdepth.summary.txt').is_file()
+    assert (qc / 'mapping_qc_short_reads' / 'sample1.flagstat.txt').is_file()
     assert (qc / 'mummer_long' / 'sample1_medaka.ps').is_file()
     assert (qc / 'mummer_short' / 'sample1_polypolish.ps').is_file()
-    assert 'sample1\t10' in (qc / 'coverage_long' / 'long_read_cov.tsv').read_text()
-    assert 'sample1\t10' in (qc / 'coverage_short' / 'short_read_cov.tsv').read_text()
+    assert 'sample1\t10' in (qc / 'mapping_qc_long_reads' / 'long_read_cov.tsv').read_text()
+    assert 'sample1\t10' in (qc / 'mapping_qc_short_reads' / 'short_read_cov.tsv').read_text()
 
     # No working leftovers
     assert not (out / '3_assembled_long' / 'sample1').exists()  # flye working folder
@@ -54,7 +55,7 @@ def test_hybrid_pipeline(stub_bin, fastq_gz, tmp_path):
     run(['-l', str(long_dir), '-s', str(short_dir), '-o', str(out),
          '--trim-short', '-t', '2', '-p', '1'])
     assert (out / '3_assembled_long' / 'sample1.fasta').read_text() == '>contig_1\nACGT\n'
-    assert (qc / 'coverage_long' / 'long_read_cov.tsv').read_text().count('sample1') == 1
+    assert (qc / 'mapping_qc_long_reads' / 'long_read_cov.tsv').read_text().count('sample1') == 1
     assert 'sample1' in (out / 'flye_stats.tsv').read_text()  # the stats table was not clobbered
 
 
@@ -115,9 +116,9 @@ def test_short_only_skesa(stub_bin, fastq_gz, tmp_path):
     assert (qc / 'assembly_graphs' / 'pe.gfa').is_file()  # gfa_connector
     assert (qc / 'assembly_graphs' / 'pe.png').is_file()  # Bandage
     assert (qc / 'quast' / 'report.tsv').is_file()
-    assert (qc / 'qualimap_short_reads' / 'pe' / 'pe.html').is_file()
-    assert (qc / 'qualimap_short_reads' / 'se' / 'se.html').is_file()
-    coverage = (qc / 'coverage_short' / 'short_read_cov.tsv').read_text()
+    assert (qc / 'mapping_qc_short_reads' / 'pe.flagstat.txt').is_file()
+    assert (qc / 'mapping_qc_short_reads' / 'se.mosdepth.summary.txt').is_file()
+    coverage = (qc / 'mapping_qc_short_reads' / 'short_read_cov.tsv').read_text()
     assert 'pe\t10' in coverage and 'se\t10' in coverage
 
 

@@ -33,9 +33,10 @@ What each step runs, with the exact settings that are not defaults.
 ## QC (every run)
 
 - **QUAST** over the final assemblies (`--min-contig 1000`).
-- **Qualimap bamqc** per sample and read type, on a minimap2 mapping (`map-ont` or `sr` preset, unmapped
-  reads dropped, duplicates removed with `samtools markdup`).
-- **Coverage**: mean `samtools depth` over the final assembly, one table per read type.
+- **Mapping QC** per sample and read type, on a minimap2 mapping (`map-ont` or `sr` preset, unmapped
+  reads dropped, duplicates removed with `samtools markdup`): `samtools flagstat` for the mapping rates
+  and mosdepth for the depth per contig.
+- **Coverage**: mosdepth's mean depth over the final assembly, one table per read type.
 - **Dot plots**: nucmer + mummerplot comparing the assembly before and after each polishing stage
   (raw vs Medaka, Medaka vs short-read polished) — a quick visual check that polishing did not
   rearrange anything.
@@ -59,6 +60,6 @@ The version of every program used is written to `log.txt` in the output folder.
 - minimap2 — Li H. Minimap2: pairwise alignment for nucleotide sequences. *Bioinformatics* 34, 3094–3100 (2018).
 - SAMtools — Danecek P, et al. Twelve years of SAMtools and BCFtools. *GigaScience* 10, giab008 (2021).
 - QUAST — Gurevich A, et al. QUAST: quality assessment tool for genome assemblies. *Bioinformatics* 29, 1072–1075 (2013).
-- Qualimap — Okonechnikov K, et al. Qualimap 2. *Bioinformatics* 32, 292–294 (2016).
+- mosdepth — Pedersen BS, Quinlan AR. Mosdepth: quick coverage calculation for genomes and exomes. *Bioinformatics* 34, 867–868 (2018).
 - MUMmer4 — Marçais G, et al. MUMmer4: a fast and versatile genome alignment system. *PLoS Comput Biol* 14, e1005944 (2018).
 - Bandage — Wick RR, et al. Bandage: interactive visualization of de novo genome assemblies. *Bioinformatics* 31, 3350–3352 (2015).

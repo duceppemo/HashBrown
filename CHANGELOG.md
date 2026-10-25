@@ -28,6 +28,10 @@ Medaka ≥ 2.0 is PyTorch-based and the conflict is gone. Both repositories' his
 - The SKESA assembly graphs use `gfa_connector` from the bioconda SKESA package when it is on the PATH
   instead of a bundled binary; Bandage pictures and gfa_connector are optional (a missing program skips
   that output with a note instead of failing).
+- **Qualimap is replaced by `samtools flagstat` + mosdepth**: same information (mapping QC and depth),
+  one mapping pass instead of two, and it removes the Java/R stack that made the conda environment
+  unsolvable. The QC folders are `mapping_qc_long_reads/` and `mapping_qc_short_reads/`, holding the
+  flagstat and mosdepth summaries and the coverage tables.
 
 ### Fixed
 - The thread/parallel/memory checks actually clamp the values now (the old comparisons could never be true,

@@ -262,45 +262,31 @@ class HashBrown:
         # QC
         print('Performing assembly QC...')
         quast_folder = os.path.join(assembly_qc_folder, 'quast')
-        qualimap_long_folder = os.path.join(assembly_qc_folder, 'qualimap_long_reads')
-        qualimap_short_folder = os.path.join(assembly_qc_folder, 'qualimap_short_reads')
+        mapping_qc_long_folder = os.path.join(assembly_qc_folder, 'mapping_qc_long_reads')
+        mapping_qc_short_folder = os.path.join(assembly_qc_folder, 'mapping_qc_short_reads')
         mummer_long_folder = os.path.join(assembly_qc_folder, 'mummer_long')
         mummer_short_folder = os.path.join(assembly_qc_folder, 'mummer_short')
-        coverage_long_folder = os.path.join(assembly_qc_folder, 'coverage_long')
-        coverage_short_folder = os.path.join(assembly_qc_folder, 'coverage_short')
 
         if self.long_polisher == 'medaka':
             print('\tDot plots - raw vs long read polished (nucmer)')
             AssemblyQcMethods.run_nucmer_parallel(self.sample_dict, mummer_long_folder, 'medaka',
                                                   self.cpu, self.parallel)
 
-        print('\tQualimap - long reads')
-        AssemblyQcMethods.map_minimap2_parallel(self.sample_dict, qualimap_long_folder, 'nanopore',
-                                                self.cpu, self.parallel)
-        AssemblyQcMethods.run_qualimap_parallel(self.sample_dict, qualimap_long_folder,
-                                                self.cpu, self.mem, self.parallel)
-
         print('\tQUAST')
         AssemblyQcMethods.run_quast(self.sample_dict, quast_folder, self.cpu)
+
+        print('\tMapping QC and coverage - long reads (flagstat, mosdepth)')
+        AssemblyQcMethods.mapping_qc_parallel(self.sample_dict, mapping_qc_long_folder, 'nanopore',
+                                              self.cpu, self.parallel)
 
         if polishing:
             print('\tDot plots - long read polished vs short read polished (nucmer)')
             AssemblyQcMethods.run_nucmer_parallel(self.sample_dict, mummer_short_folder, 'polypolish',
                                                   self.cpu, self.parallel)
 
-            print('\tQualimap - short reads')
-            AssemblyQcMethods.map_minimap2_parallel(self.sample_dict, qualimap_short_folder, 'illumina',
-                                                    self.cpu, self.parallel)
-            AssemblyQcMethods.run_qualimap_parallel(self.sample_dict, qualimap_short_folder,
-                                                    self.cpu, self.mem, self.parallel)
-
-            print('\tShort read coverage')
-            AssemblyQcMethods.read_coverage_parallel(self.sample_dict, coverage_short_folder, 'illumina',
-                                                     self.cpu, self.parallel)
-
-        print('\tLong read coverage')
-        AssemblyQcMethods.read_coverage_parallel(self.sample_dict, coverage_long_folder, 'nanopore',
-                                                 self.cpu, self.parallel)
+            print('\tMapping QC and coverage - short reads (flagstat, mosdepth)')
+            AssemblyQcMethods.mapping_qc_parallel(self.sample_dict, mapping_qc_short_folder, 'illumina',
+                                                  self.cpu, self.parallel)
 
     def run_short(self):
         """Short read assembly with SKESA or SPAdes (single-end or paired-end)."""
@@ -335,21 +321,14 @@ class HashBrown:
         # QC
         print('Performing assembly QC...')
         quast_folder = os.path.join(assembly_qc_folder, 'quast')
-        qualimap_short_folder = os.path.join(assembly_qc_folder, 'qualimap_short_reads')
-        coverage_short_folder = os.path.join(assembly_qc_folder, 'coverage_short')
-
-        print('\tQualimap - short reads')
-        AssemblyQcMethods.map_minimap2_parallel(self.sample_dict, qualimap_short_folder, 'illumina',
-                                                self.cpu, self.parallel)
-        AssemblyQcMethods.run_qualimap_parallel(self.sample_dict, qualimap_short_folder,
-                                                self.cpu, self.mem, self.parallel)
+        mapping_qc_short_folder = os.path.join(assembly_qc_folder, 'mapping_qc_short_reads')
 
         print('\tQUAST')
         AssemblyQcMethods.run_quast(self.sample_dict, quast_folder, self.cpu)
 
-        print('\tShort read coverage')
-        AssemblyQcMethods.read_coverage_parallel(self.sample_dict, coverage_short_folder, 'illumina',
-                                                 self.cpu, self.parallel)
+        print('\tMapping QC and coverage - short reads (flagstat, mosdepth)')
+        AssemblyQcMethods.mapping_qc_parallel(self.sample_dict, mapping_qc_short_folder, 'illumina',
+                                              self.cpu, self.parallel)
 
 
 def main(argv=None):

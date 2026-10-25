@@ -20,13 +20,12 @@ output/
 │                                  plus <sample>.polypolish.log, <sample>.report and <sample>.vcf (pyPOLCA)
 └── 7_assembly_qc/
     ├── quast/                     report.html / report.tsv over all final assemblies
-    ├── qualimap_long_reads/       <sample>/<sample>.html mapping QC, long reads
-    ├── qualimap_short_reads/      the same with the short reads (hybrid runs)
+    ├── mapping_qc_long_reads/     <sample>.flagstat.txt + <sample>.mosdepth.summary.txt
+    │                              and long_read_cov.tsv (mean depth per sample)
+    ├── mapping_qc_short_reads/    the same with the short reads (hybrid runs), short_read_cov.tsv
     ├── mummer_long/               <sample>_medaka.ps dot plot: raw vs Medaka
     ├── mummer_short/              <sample>_polypolish.ps dot plot: Medaka vs short-read polished
-    ├── assembly_graphs/           <sample>.gfa + <sample>.png (Bandage)
-    ├── coverage_long/long_read_cov.tsv    mean long-read depth per sample
-    └── coverage_short/short_read_cov.tsv  mean short-read depth per sample (hybrid runs)
+    └── assembly_graphs/           <sample>.gfa + <sample>.png (Bandage)
 ```
 
 The **final assembly** of each sample is the deepest one present: `6_polished_short/`, else
@@ -41,9 +40,8 @@ output/
 ├── 2_assembled_short/             <sample>.fasta — the final assemblies
 └── 3_assembly_qc/
     ├── quast/
-    ├── qualimap_short_reads/
-    ├── assembly_graphs/           gfa_connector (SKESA) or SPAdes graphs + Bandage PNGs
-    └── coverage_short/short_read_cov.tsv
+    ├── mapping_qc_short_reads/    flagstat + mosdepth summaries, short_read_cov.tsv
+    └── assembly_graphs/           gfa_connector (SKESA) or SPAdes graphs + Bandage PNGs
 ```
 
 ## File notes
@@ -53,5 +51,5 @@ output/
 - The dot plots are PostScript (`.ps`); any viewer or `ps2pdf` opens them. A straight diagonal means
   polishing changed only small things; steps, gaps or off-diagonal segments mean structural changes worth
   investigating.
-- Coverage is the mean of `samtools depth` over covered positions, duplicates removed; `NA` means the
+- Coverage is mosdepth's overall mean depth (duplicates removed before counting); `NA` means the
   mapping produced no bam (no assembly or no reads).
