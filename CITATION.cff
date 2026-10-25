@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use HashBrown, please cite it as below, together with the programs it runs (see the wiki)."
+type: software
+title: "HashBrown: long-read, short-read and hybrid bacterial genome assembly pipeline"
+authors:
+  - family-names: Duceppe
+    given-names: Marc-Olivier
+version: 1.0.0
+date-released: 2026-10-24
+license: MIT
+repository-code: "https://github.com/duceppemo/HashBrown"
+url: "https://github.com/duceppemo/HashBrown"
+keywords:
+  - bioinformatics
+  - bacterial genomics
+  - genome assembly
+  - nanopore
+  - illumina
+  - hybrid assembly
+  - polishing
+references:
+  - type: software
+    title: "BGA: Bacterial Genome Assembly (long reads and hybrid)"
+    authors:
+      - family-names: Duceppe
+        given-names: Marc-Olivier
+    repository-code: "https://github.com/duceppemo/BGA"
+    notes: "HashBrown merges and supersedes BGA and BGA_short."
+  - type: software
+    title: "BGA_short: Bacterial Genome Assembly (short reads)"
+    authors:
+      - family-names: Duceppe
+        given-names: Marc-Olivier
+    repository-code: "https://github.com/duceppemo/BGA_short"
+    notes: "HashBrown merges and supersedes BGA and BGA_short."

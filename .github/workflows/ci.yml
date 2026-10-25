@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install "ruff==0.16.8"  # As in .pre-commit-config.yaml
+      - run: ruff check --output-format=github .
+
+  test:
+    # Unit and pipeline tests: external programs are replaced by stubs, so no conda environment is needed.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        include:
+          - os: macos-latest
+            python-version: "3.12"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[test]"
+      - run: pytest -v --cov=hashbrown --cov-report=term --cov-report=xml
+      - run: hashbrown --version
+      # Upload once. Dependabot pull requests cannot read the CODECOV_TOKEN secret, so they skip the upload.
+      - uses: codecov/codecov-action@v7
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12' && github.actor != 'dependabot[bot]'
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          fail_ci_if_error: ${{ github.event_name == 'push' && secrets.CODECOV_TOKEN != '' }}
