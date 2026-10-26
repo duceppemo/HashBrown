@@ -131,6 +131,7 @@ class ExtraQcMethods:
             return {}, []
         if _missing('meryl', 'merqury.sh'):
             return {}, ['Merqury QV skipped: not installed (conda install -c bioconda merqury).']
+        Methods.make_folder(work)
         meryl_db = os.path.join(work, 'reads.meryl')
         if not os.path.isdir(meryl_db):
             parts = []
