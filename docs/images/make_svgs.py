@@ -58,55 +58,83 @@ def logo():
 '''
 
 
-def box(x, y, w, h, title, sub, t):
-    return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="8" fill="{t["box"]}" '
-            f'stroke="{t["edge"]}"/>'
+def box(x, y, w, h, title, sub, t, dashed=False):
+    dash = ' stroke-dasharray="5 4"' if dashed else ''
+    return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="9" fill="{t["box"]}" '
+            f'stroke="{t["edge"]}" stroke-width="1.2"{dash}/>'
             f'<text x="{x + w / 2}" y="{y + 22}" font-size="13" font-weight="700" text-anchor="middle" '
             f'fill="{t["text"]}">{title}</text>'
             f'<text x="{x + w / 2}" y="{y + 40}" font-size="11" text-anchor="middle" '
             f'fill="{t["muted"]}">{sub}</text>')
 
 
-def arrow(x0, y0, x1, y1, t):
-    return (f'<path d="M{x0},{y0} L{x1},{y1}" stroke="{t["arrow"]}" stroke-width="1.8" '
-            f'marker-end="url(#ah)"/>')
+def arrow(d, t, marker='ah', dashed=False):
+    dash = ' stroke-dasharray="5 4"' if dashed else ''
+    stroke = GOLDEN if marker == 'ahg' else t["arrow"]
+    return (f'<path d="{d}" fill="none" stroke="{stroke}" stroke-width="1.8"{dash} '
+            f'marker-end="url(#{marker})"/>')
 
 
 def pipeline():
+    # Two columns flowing top to bottom, a routing gutter between them, one QC box across the bottom.
+    # Long reads go down the left column; short reads down the right. In hybrid runs the trimmed short
+    # reads cross the gutter (golden dashed connector) to polish the long-read assembly.
     t = AUTO
+    bw, bh = 250, 52           # box size
+    lx, rx = 40, 400           # column left edges
+    lc, rc = lx + bw / 2, rx + bw / 2  # column centers (165, 525)
+    gx = (lx + bw + rx) / 2    # gutter channel x (345)
+    rows = [34, 120, 206, 292]  # box tops; centers are top + 26
+    qy, qh = 378, 56           # QC box
+
     parts = [
-        f'<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
-        f'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="{t["arrow"]}"/></marker></defs>'
+        f'<defs>'
+        f'<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
+        f'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="{t["arrow"]}"/></marker>'
+        f'<marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
+        f'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="{GOLDEN}"/></marker>'
+        f'</defs>'
     ]
-    # Long-read lane (y=20): trim/filter -> assemble -> medaka -> short polish -> QC
-    parts.append(f'<text x="80" y="16" font-size="12" font-weight="700" fill="{t["muted"]}">Long reads (Nanopore)</text>')
-    parts.append(box(20, 24, 120, 50, '1 Prepare', 'Porechop · Filtlong', t))
-    parts.append(box(170, 24, 120, 50, '2 Assemble', 'Flye or Shasta', t))
-    parts.append(box(320, 24, 120, 50, '3 Polish long', 'Medaka (or none)', t))
-    parts.append(box(470, 24, 150, 50, '4 Polish short', 'Polypolish → pyPOLCA', t))
-    parts.append(arrow(140, 49, 168, 49, t))
-    parts.append(arrow(290, 49, 318, 49, t))
-    parts.append(arrow(440, 49, 468, 49, t))
-    parts.append(arrow(620, 49, 658, 84, t))
 
-    # Short-read lane (y=120)
-    parts.append(f'<text x="80" y="112" font-size="12" font-weight="700" fill="{t["muted"]}">Short reads (Illumina, Ion Torrent)</text>')
-    parts.append(box(20, 120, 120, 50, 'Trim', 'fastp', t))
-    parts.append(box(170, 120, 120, 50, 'Assemble', 'SKESA or SPAdes', t))
-    parts.append(arrow(140, 145, 168, 145, t))
-    # Short reads joining the hybrid lane
-    parts.append(arrow(140, 132, 468, 62, t))
-    # Short-only to QC
-    parts.append(arrow(290, 145, 658, 116, t))
+    # Column headers
+    parts.append(f'<text x="{lc}" y="20" font-size="12" font-weight="700" text-anchor="middle" '
+                 f'fill="{t["muted"]}">Long reads (Nanopore)</text>')
+    parts.append(f'<text x="{rc}" y="20" font-size="12" font-weight="700" text-anchor="middle" '
+                 f'fill="{t["muted"]}">Short reads (Illumina · Ion Torrent)</text>')
 
-    # QC box spanning both lanes
-    parts.append(box(662, 70, 150, 60, 'QC', 'QUAST · flagstat ·', t))
-    parts.append(f'<text x="737" y="124" font-size="11" text-anchor="middle" fill="{t["muted"]}">'
-                 f'mosdepth · dot plots · graphs</text>')
+    # Left column: the long-read path
+    parts.append(box(lx, rows[0], bw, bh, 'Prepare', 'Porechop · Filtlong', t))
+    parts.append(box(lx, rows[1], bw, bh, 'Assemble', 'Flye or Shasta', t))
+    parts.append(box(lx, rows[2], bw, bh, 'Polish (long reads)', 'Medaka · optional', t))
+    parts.append(box(lx, rows[3], bw, bh, 'Polish (short reads)', 'Polypolish → pyPOLCA · hybrid only', t,
+                     dashed=True))
+    for y0, y1 in zip(rows, rows[1:], strict=False):
+        parts.append(arrow(f'M{lc},{y0 + bh + 2} L{lc},{y1 - 2}', t))
+    parts.append(arrow(f'M{lc},{rows[3] + bh + 2} L{lc},{qy - 2}', t))
 
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 830 190" width="830" height="190"
+    # Right column: the short-read path
+    parts.append(box(rx, rows[0], bw, bh, 'Trim', 'fastp', t))
+    parts.append(box(rx, rows[1], bw, bh, 'Assemble', 'SKESA or SPAdes', t))
+    parts.append(arrow(f'M{rc},{rows[0] + bh + 2} L{rc},{rows[1] - 2}', t))
+    parts.append(arrow(f'M{rc},{rows[1] + bh + 2} L{rc},{qy - 2}', t))
+    parts.append(f'<text x="{rc + 8}" y="284" font-size="11" font-style="italic" '
+                 f'fill="{t["muted"]}">short reads only</text>')
+
+    # Hybrid: trimmed short reads cross the gutter to polish the long-read assembly
+    y_trim, y_pol = rows[0] + 26, rows[3] + 26
+    parts.append(arrow(f'M{rx - 2},{y_trim} H{gx + 6} Q{gx},{y_trim} {gx},{y_trim + 6} '
+                       f'V{y_pol - 6} Q{gx},{y_pol} {gx - 6},{y_pol} H{lx + bw + 2}',
+                       t, marker='ahg', dashed=True))
+    parts.append(f'<text x="{gx + 8}" y="190" font-size="11" font-style="italic" '
+                 f'fill="{GOLDEN}">hybrid</text>')
+
+    # QC box spanning both columns: every run ends here
+    parts.append(box(lx, qy, rx + bw - lx, qh, 'QC — every run',
+                     'QUAST · flagstat · mosdepth · dot plots · assembly graphs', t))
+
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 690 452" width="690" height="452"
   font-family="{FONT}">
-  <title>HashBrown pipeline: long reads are prepared, assembled and polished; short reads polish them or are assembled on their own; everything ends in QC</title>{style()}
+  <title>HashBrown pipeline: long reads are prepared, assembled and polished; short reads polish them (hybrid) or are assembled on their own; everything ends in QC</title>{style()}
   {"".join(parts)}
 </svg>
 '''

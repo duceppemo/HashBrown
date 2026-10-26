@@ -22,7 +22,7 @@ It merges and supersedes [BGA](https://github.com/duceppemo/BGA) and
 conflicted with the short-read tools; one conda environment now covers everything.
 
 <p align="center">
-  <img src="docs/images/pipeline.svg" alt="Long reads: prepare (Porechop, Filtlong), assemble (Flye or Shasta), polish (Medaka), then polish with short reads (Polypolish, pyPOLCA). Short reads alone: trim (fastp), assemble (SKESA or SPAdes). Both end in QC (QUAST, flagstat, mosdepth, dot plots, graphs)." width="860">
+  <img src="docs/images/pipeline.svg" alt="Long reads: prepare (Porechop, Filtlong), assemble (Flye or Shasta), polish (Medaka), then polish with short reads (Polypolish, pyPOLCA). Short reads alone: trim (fastp), assemble (SKESA or SPAdes). Both end in QC (QUAST, flagstat, mosdepth, dot plots, graphs)." width="690">
 </p>
 
 ## Quick start
