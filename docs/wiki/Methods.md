@@ -80,6 +80,28 @@ Every run ends with a per-sample HTML report (plus a PDF twin and a run-level in
   **blob plot** — every contig by %GC and coverage, dot area ~ length, colored by its closest RefSeq
   genome (per-contig `mash dist -i`).
 
+### QC criteria and the MIMAG verdict
+
+The report's "QC criteria" table judges every metric against an explicit threshold and shows the verdict
+as a pass / warn / fail chip; the thresholds anchor on the **MIMAG high-quality draft standard**
+(Bowers *et al.* 2017) where one exists, plus pipeline-sensible read-coverage minimums:
+
+| Metric | Pass | Warn | Fail | Source |
+| --- | --- | --- | --- | --- |
+| CheckM2 completeness | > 90% | 50–90% | < 50% | MIMAG |
+| CheckM2 contamination | < 5% | 5–10% | ≥ 10% | MIMAG |
+| rRNA genes | ≥ 1 each of 5S, 16S, 23S | — | any missing | MIMAG |
+| tRNA isotypes | ≥ 18 | < 18 | — | MIMAG |
+| Long-read coverage | ≥ 30x | < 30x | — | pipeline |
+| Short-read coverage (when present) | ≥ 30x | < 30x | — | pipeline |
+| ANI to closest genome | ≥ 95% | — | < 95% | species boundary (Jain *et al.* 2018) |
+| ConFindr | Clean | — | Contaminated | ConFindr |
+
+The headline verdict is the **MIMAG draft-quality tier**: *high-quality* needs completeness > 90%,
+contamination < 5%, all three rRNAs and ≥ 18 tRNA isotypes; *medium-quality* needs completeness ≥ 50%
+and contamination < 10%; anything else is *low-quality*. A metric whose module did not run shows as
+"not assessed" — it never counts as a pass, and without CheckM2 no tier is assigned.
+
 Each of these modules is optional: a missing tool or database turns into a "skipped (install hint)" note
 in the report, never an error. The [Usage](Usage) page lists the install one-liners and `hashbrown db`
 downloads. The version of every program used is written to `log.txt` in the output folder.
@@ -122,3 +144,4 @@ downloads. The version of every program used is written to `log.txt` in the outp
 - ConFindr — Low AJ, et al. ConFindr: rapid detection of intraspecies and cross-species contamination in bacterial whole-genome sequence data. *PeerJ* 7, e6995 (2019).
 - GenomeScope2 — Ranallo-Benavidez TR, et al. GenomeScope 2.0 and Smudgeplot for reference-free profiling of polyploid genomes. *Nat Commun* 11, 1432 (2020).
 - WeasyPrint — Kozea, https://weasyprint.org
+- MIMAG — Bowers RM, et al. Minimum information about a single amplified genome (MISAG) and a metagenome-assembled genome (MIMAG) of bacteria and archaea. *Nat Biotechnol* 35, 725–731 (2017).
