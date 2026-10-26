@@ -10,7 +10,7 @@ package:
 
 source:
   url: https://github.com/duceppemo/HashBrown/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: FILL_ME_AT_RELEASE_TIME
+  sha256: 03b1a7e60df4f4f0232d686347595f4e82ed2b89dcb3b5953afa4bb296f68c13
 
 build:
   number: 0
