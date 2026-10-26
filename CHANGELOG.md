@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- **Contamination screening and read-based profiling** (reporting phase 4): ConFindr verdict from the
+  short reads (`hashbrown db confindr`), a GenomeScope2 genome profile (size estimate, heterozygosity,
+  read error rate from the short-read 21-mers, reusing Merqury's meryl counts), and a built-in **blob
+  plot** — every contig by %GC and coverage, dot area ~ length, colored by its closest RefSeq genome
+  (per-contig `mash dist -i` + NCBI datasets; no BlobToolKit-scale databases needed). The plot plus a
+  `tables/<sample>_blob.tsv` make stray contigs obvious.
 - **Typing, AMR and annotation in the report** (reporting phase 3), optional modules like the rest:
   MLST (scheme/ST also on the run index), MOB-suite plasmid reconstruction and typing, one merged
   gene table from AMRFinderPlus (resistance), abricate+VFDB (virulence) and abricate+PlasmidFinder

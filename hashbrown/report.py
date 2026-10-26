@@ -162,6 +162,55 @@ class ReportMethods:
         return ReportMethods._inline_svg(fig)
 
     @staticmethod
+    def contig_gc(assembly, cpu):
+        """Per-contig length and %GC via seqkit fx2tab; {contig: (length, gc)}."""
+        done = subprocess.run(['seqkit', 'fx2tab', '-n', '-i', '-l', '-g', '-j', str(cpu), assembly],
+                              capture_output=True, text=True)
+        per_contig = {}
+        for line in done.stdout.splitlines():
+            fields = line.split('\t')
+            if len(fields) >= 3:
+                try:
+                    per_contig[fields[0]] = (int(fields[1]), float(fields[2]))
+                except ValueError:
+                    continue
+        return per_contig
+
+    @staticmethod
+    def fig_blob(blob_rows):
+        """GC vs coverage per contig, dot area ~ contig length, colored by taxonomy; inline SVG."""
+        if not blob_rows:
+            return ''
+        import matplotlib
+        matplotlib.use('Agg')
+        from matplotlib import pyplot as plt
+
+        fig, ax = plt.subplots(figsize=(7.5, 4.2))
+        organisms = sorted({row['organism'] for row in blob_rows})
+        colors = plt.get_cmap('tab10')
+        max_length = max(row['length'] for row in blob_rows) or 1
+        for i, organism in enumerate(organisms):
+            rows = [r for r in blob_rows if r['organism'] == organism]
+            ax.scatter([r['gc'] for r in rows], [max(r['cov'], 0.1) for r in rows],
+                       s=[40 + 360 * r['length'] / max_length for r in rows],
+                       color=colors(i % 10), alpha=0.65, edgecolors='none',
+                       label=organism[:40] if organism else 'unassigned')
+        covs = [max(r['cov'], 0.1) for r in blob_rows]
+        if max(covs) > 20 * min(covs):
+            ax.set_yscale('log')
+        if len(blob_rows) <= 15:
+            for r in blob_rows:
+                ax.annotate(r['contig'][:15], (r['gc'], max(r['cov'], 0.1)),
+                            fontsize=7, alpha=0.8, xytext=(4, 4), textcoords='offset points')
+        ax.set_xlabel('%GC')
+        ax.set_ylabel('Mean coverage (x)')
+        if any(o for o in organisms):
+            ax.legend(frameon=False, fontsize=8, loc='best')
+        ax.spines[['top', 'right']].set_visible(False)
+        fig.tight_layout()
+        return ReportMethods._inline_svg(fig)
+
+    @staticmethod
     def parse_mosdepth_summary(summary_file):
         """Per-contig mean coverage rows plus the total, from a <sample>.mosdepth.summary.txt."""
         contigs, total = [], None
@@ -242,7 +291,8 @@ class ReportMethods:
     @staticmethod
     def write_tables(tables_folder, sample, funnels, assembly_rows, contigs_long, contigs_short,
                      identity=None, completeness=None, sanity=None,
-                     typing=None, plasmids=None, genes=None):
+                     typing=None, plasmids=None, genes=None,
+                     kmer=None, contamination=None, blob_rows=None):
         """Every report table as machine-readable TSV."""
         Methods.make_folder(tables_folder)
 
@@ -258,13 +308,16 @@ class ReportMethods:
                                          'coverage', 'kept'], funnel['rows'])
         if assembly_rows:
             write('assembly_funnel', ['stage', 'contigs', 'size', 'n50', 'gc', 'qv'], assembly_rows)
-        summary = {**(identity or {}), **(completeness or {}), **(sanity or {}), **(typing or {})}
+        summary = {**(identity or {}), **(completeness or {}), **(sanity or {}), **(typing or {}),
+                   **(kmer or {}), **(contamination or {})}
         if summary:
             write('identity_completeness', list(summary), [summary])
         if plasmids:
             write('plasmids', ['plasmid', 'size', 'rep', 'relaxase', 'mobility'], plasmids)
         if genes:
             write('amr_virulence', ['gene', 'source', 'identity', 'coverage', 'contig', 'info'], genes)
+        if blob_rows:
+            write('blob', ['contig', 'length', 'gc', 'cov', 'organism'], blob_rows)
         cov_rows = [{'contig': c['contig'], 'length': c['length'], 'read_type': t, 'mean_coverage': c['mean']}
                     for t, contigs in (('long', contigs_long), ('short', contigs_short)) for c in contigs]
         if cov_rows:
@@ -330,6 +383,28 @@ class ReportMethods:
             for row in assembly_rows:
                 row['qv'] = qv_map.get(row['stage'], '-')
 
+        # Contamination and read-based genome profile (phase 4)
+        kmer, contamination, blob_rows, blob_fig = {}, {}, [], ''
+        if final_assembly and os.path.exists(final_assembly):
+            kmer, kmer_notes = ExtraQcMethods.genomescope(
+                sample, sample_obj, os.path.join(qc_work, 'merqury', 'reads.meryl'),
+                os.path.join(qc_work, 'genomescope'), cpu)
+            notes += kmer_notes
+            contamination, confindr_notes = ExtraQcMethods.confindr(sample, sample_obj, qc_work, cpu)
+            notes += confindr_notes
+            cov_map = {c['contig']: c['mean'] for c in (contigs_long or contigs_short)}
+            if cov_map:
+                taxonomy, tax_notes = ExtraQcMethods.contig_taxonomy(final_assembly, qc_work, cpu)
+                notes += tax_notes
+                gc_map = ReportMethods.contig_gc(final_assembly, cpu)
+                blob_rows = [{'contig': contig, 'length': length, 'gc': gc,
+                              'cov': cov_map.get(contig, 0), 'organism': taxonomy.get(contig, '')}
+                             for contig, (length, gc) in gc_map.items()]
+                try:
+                    blob_fig = ReportMethods.fig_blob(blob_rows)
+                except ImportError:
+                    blob_fig = ''
+
         # Typing, genes and annotation (phase 3)
         typing, plasmids, genes, annotation = {}, [], [], {}
         if final_assembly and os.path.exists(final_assembly):
@@ -381,7 +456,8 @@ class ReportMethods:
         ReportMethods.write_tables(os.path.join(report_folder, 'tables'), sample, funnels,
                                    assembly_rows, contigs_long, contigs_short,
                                    identity, completeness, sanity,
-                                   typing=typing, plasmids=plasmids, genes=genes)
+                                   typing=typing, plasmids=plasmids, genes=genes,
+                                   kmer=kmer, contamination=contamination, blob_rows=blob_rows)
 
         # Per-contig coverage, long and short side by side
         short_map = {c['contig']: c['mean'] for c in contigs_short}
@@ -403,6 +479,7 @@ class ReportMethods:
                 assembly_rows=assembly_rows, cov_rows=cov_rows, cov_total=cov_total,
                 cov_fig=cov_fig, identity=identity, completeness=completeness, sanity=sanity,
                 typing=typing, plasmids=plasmids, genes=genes, annotation=annotation,
+                kmer=kmer, contamination=contamination, blob_fig=blob_fig,
                 links=links + pycoqc_links, notes=notes))
         ReportMethods.render_pdf(html_file, notes)
 
@@ -571,6 +648,39 @@ PlasmidFinder: plasmid replicons.</p>
 {% if annotation %}
 <h2>Annotation</h2>
 <p>{{ annotation.tool }}: {{ annotation.summary }}</p>
+{% endif %}
+
+{% if kmer %}
+<h2>Read-based genome profile (GenomeScope2)</h2>
+<table>
+{% if kmer.genome_size_estimate is defined %}
+<tr><td>Estimated haploid genome size</td><td>{{ kmer.genome_size_estimate }}</td></tr>
+{% endif %}
+{% if kmer.heterozygosity is defined %}
+<tr><td>Heterozygosity (should be ~0 for a pure isolate)</td><td>{{ kmer.heterozygosity }}</td></tr>
+{% endif %}
+{% if kmer.read_error_rate is defined %}
+<tr><td>Read error rate</td><td>{{ kmer.read_error_rate }}</td></tr>
+{% endif %}
+</table>
+<p class="muted">From the short-read 21-mers, independent of the assembly: a size estimate far from the
+assembly size, or non-zero heterozygosity, points at contamination or a mixed culture.</p>
+{% endif %}
+
+{% if contamination or blob_fig %}
+<h2>Contamination</h2>
+{% if contamination %}
+<table>
+<tr><th>ConFindr verdict</th><th>Genus</th><th>Contaminating SNVs</th></tr>
+<tr><td>{{ contamination.confindr_status }}</td><td>{{ contamination.confindr_genus }}</td>
+<td>{{ contamination.confindr_snvs }}</td></tr>
+</table>
+{% endif %}
+{% if blob_fig %}
+<figure>{{ blob_fig }}<figcaption class="muted">Blob plot: every contig by %GC and coverage (dot area ~
+length, color = closest RefSeq genome). Contigs far from the main blob, or colored as another species,
+are contamination candidates.</figcaption></figure>
+{% endif %}
 {% endif %}
 
 {% if cov_rows %}

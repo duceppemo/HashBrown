@@ -64,6 +64,11 @@ installed** (any missing one is reported as "skipped" with the install hint, nev
 | abricate | virulence factors (VFDB) and plasmid replicons (PlasmidFinder) | `conda install abricate` |
 | Bakta | genome annotation (default when installed; `--annotate none` to skip) | `conda install bakta` |
 | PGAP | submission-grade NCBI annotation via Docker (`--annotate pgap`, ~1 h/genome) | [ncbi/pgap](https://github.com/ncbi/pgap) |
+| ConFindr | intra-species contamination from the short reads | `conda install confindr` |
+| GenomeScope2 | read-based genome size/heterozygosity estimate (needs merqury's meryl) | `conda install genomescope2` |
+
+The **blob plot** (per-contig GC vs coverage, colored by the closest RefSeq genome) needs no extra tool:
+it uses mash, seqkit and NCBI datasets, and draws uncolored when the mash database or internet is absent.
 
 Some modules need a local database first (default `~/.hashbrown/db`, override with `$HASHBROWN_DB`;
 AMRFinderPlus and MOB-suite manage their own locations):
@@ -74,6 +79,7 @@ hashbrown db checkm2    # CheckM2 DIAMOND database (~3 GB)
 hashbrown db bakta      # Bakta light database (~2 GB)
 hashbrown db amrfinder  # AMRFinderPlus database
 hashbrown db mob        # MOB-suite database
+hashbrown db confindr   # ConFindr rMLST core databases (full coverage needs a free PubMLST account)
 ```
 
 Install the heavy ones in their own conda env if they ever conflict with HashBrown's — the pipeline only

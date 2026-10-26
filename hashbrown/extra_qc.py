@@ -4,6 +4,7 @@ Every module runs only when its tool (and database, where one is needed) is avai
 returns empty results plus a note saying how to enable it. Nothing here may ever fail the pipeline.
 """
 
+import contextlib
 import csv
 import glob
 import json
@@ -132,18 +133,8 @@ class ExtraQcMethods:
             return {}, []
         if _missing('meryl', 'merqury.sh'):
             return {}, ['Merqury QV skipped: not installed (conda install -c bioconda merqury).']
-        Methods.make_folder(work)
         meryl_db = os.path.join(work, 'reads.meryl')
-        if not os.path.isdir(meryl_db):
-            parts = []
-            for i, fastq in enumerate(reads):
-                part = os.path.join(work, f'reads_{i}.meryl')
-                _run(['meryl', 'count', 'k=21', f'threads={cpu}', fastq, 'output', part])
-                parts.append(part)
-            _run(['meryl', 'union-sum', 'output', meryl_db] + parts)
-            for part in parts:
-                shutil.rmtree(part, ignore_errors=True)
-        if not os.path.isdir(meryl_db):
+        if not ExtraQcMethods._build_meryl_db(reads, meryl_db, cpu):
             return {}, ['Merqury QV failed: meryl could not count the short-read k-mers.']
 
         qv_per_stage = {}
@@ -163,6 +154,148 @@ class ExtraQcMethods:
                 if len(fields) >= 4:
                     qv_per_stage[stage_name] = fields[3]
         return qv_per_stage, [] if qv_per_stage else ['Merqury QV failed: no .qv output produced.']
+
+    @staticmethod
+    def _build_meryl_db(reads, meryl_db, cpu):
+        """21-mer counts of the short reads, shared by Merqury and GenomeScope2; True when usable."""
+        if os.path.isdir(meryl_db):
+            return True
+        Methods.make_folder(os.path.dirname(meryl_db))
+        parts = []
+        for i, fastq in enumerate(reads):
+            part = os.path.join(os.path.dirname(meryl_db), f'reads_{i}.meryl')
+            _run(['meryl', 'count', 'k=21', f'threads={cpu}', fastq, 'output', part])
+            parts.append(part)
+        _run(['meryl', 'union-sum', 'output', meryl_db] + parts)
+        for part in parts:
+            shutil.rmtree(part, ignore_errors=True)
+        return os.path.isdir(meryl_db)
+
+    # ------------------------------------------------------------------ GenomeScope2
+    @staticmethod
+    def genomescope(sample, sample_obj, meryl_db, work, cpu):
+        """Read-based genome profile from the short-read 21-mers; returns (result dict, notes)."""
+        reads = sample_obj.best_illumina()
+        if not reads:
+            return {}, []
+        if _missing('genomescope2'):
+            return {}, ['GenomeScope2 skipped: not installed (conda install genomescope2).']
+        if _missing('meryl'):
+            return {}, ['GenomeScope2 skipped: it needs meryl for the k-mer histogram '
+                        '(conda install merqury).']
+        Methods.make_folder(work)
+        if not ExtraQcMethods._build_meryl_db(reads, meryl_db, cpu):
+            return {}, ['GenomeScope2 failed: meryl could not count the short-read k-mers.']
+        histogram = os.path.join(work, 'reads.histo')
+        if not os.path.exists(histogram):
+            done = subprocess.run(['meryl', 'histogram', meryl_db], capture_output=True, text=True)
+            if done.returncode != 0 or not done.stdout:
+                return {}, ['GenomeScope2 failed: meryl histogram produced nothing.']
+            with open(histogram, 'w') as f:
+                f.write(done.stdout)
+        out = os.path.join(work, 'genomescope')
+        summary_file = os.path.join(out, 'summary.txt')
+        if not os.path.exists(summary_file):
+            _run(['genomescope2', '-i', histogram, '-o', out, '-k', '21', '-p', '1'])
+        if not os.path.exists(summary_file):
+            return {}, ['GenomeScope2 failed: see its output in the report qc folder.']
+        results = {}
+        wanted = {'Genome Haploid Length': 'genome_size_estimate',
+                  'Heterozygous (ab)': 'heterozygosity',
+                  'Read Error Rate': 'read_error_rate'}
+        with open(summary_file) as f:
+            for line in f:
+                for label, key in wanted.items():
+                    if line.startswith(label):
+                        values = re.split(r'\s{2,}', line.strip())
+                        if len(values) >= 2:
+                            results[key] = ' - '.join(values[1:3]) if len(values) > 2 else values[1]
+        return results, []
+
+    # ------------------------------------------------------------------ ConFindr
+    @staticmethod
+    def confindr(sample, sample_obj, work, cpu):
+        """Intra-species contamination from the short reads; returns (result dict, notes)."""
+        reads = sample_obj.best_illumina()
+        if not reads:
+            return {}, []
+        exe = shutil.which('confindr.py') or shutil.which('confindr')
+        if not exe:
+            return {}, ['ConFindr skipped: not installed (conda install confindr).']
+        out = os.path.join(work, 'confindr')
+        report = os.path.join(out, 'confindr_report.csv')
+        if not os.path.exists(report):
+            reads_dir = os.path.join(work, 'confindr_reads')
+            Methods.make_folder(reads_dir)
+            for fastq in reads:
+                link = os.path.join(reads_dir, os.path.basename(fastq))
+                if not os.path.exists(link):
+                    os.symlink(os.path.realpath(fastq), link)
+            cmd = [exe, '-i', reads_dir, '-o', out, '-t', str(cpu)]
+            database = os.path.join(db_dir(), 'confindr')
+            if os.path.isdir(database):
+                cmd += ['-d', database]
+            _run(cmd)
+        if not os.path.exists(report):
+            return {}, ['ConFindr failed: its rMLST database may be missing (hashbrown db confindr; '
+                        'full coverage needs a free PubMLST account, see the ConFindr docs).']
+        with open(report) as f:
+            rows = list(csv.DictReader(f))
+        if not rows:
+            return {}, ['ConFindr produced an empty report.']
+        contaminated = any(r.get('ContamStatus', '').strip().lower() == 'true' for r in rows)
+        return {'confindr_status': 'Contaminated' if contaminated else 'Clean',
+                'confindr_genus': ';'.join(sorted({r.get('Genus') or '-' for r in rows})),
+                'confindr_snvs': ';'.join(r.get('NumContamSNVs') or '-' for r in rows)}, []
+
+    # ------------------------------------------------------------------ per-contig taxonomy
+    @staticmethod
+    def contig_taxonomy(assembly, work, cpu):
+        """Mash top hit per contig (RefSeq sketch), named via NCBI datasets when online.
+
+        Returns ({contig: organism or accession}, notes). Empty when mash or its database is absent —
+        the blob plot then draws uncolored.
+        """
+        if _missing('mash'):
+            return {}, []
+        sketches = glob.glob(os.path.join(db_dir(), 'mash', '*.msh'))
+        if not sketches:
+            return {}, []
+        done = subprocess.run(['mash', 'dist', '-p', str(cpu), '-i', sketches[0], assembly],
+                              capture_output=True, text=True)
+        best = {}
+        for line in done.stdout.splitlines():
+            fields = line.split('\t')
+            if len(fields) < 3:
+                continue
+            contig, distance = fields[1], float(fields[2])
+            if contig not in best or distance < best[contig][1]:
+                best[contig] = (fields[0], distance)
+        if not best:
+            return {}, []
+
+        # Name the few unique accessions (cached, so a rebuilt report is offline-safe)
+        cache_file = os.path.join(work, 'organisms.json')
+        organisms = {}
+        if os.path.exists(cache_file):
+            with open(cache_file) as f:
+                organisms = json.load(f)
+        accessions = {}
+        for contig, (hit, _) in best.items():
+            match = re.search(r'(GC[AF]_\d+\.\d+)', hit)
+            accessions[contig] = match.group(1) if match else os.path.basename(hit)
+        if shutil.which('datasets'):
+            for accession in set(accessions.values()) - set(organisms):
+                if not accession.startswith(('GCA_', 'GCF_')):
+                    continue
+                summary = subprocess.run(['datasets', 'summary', 'genome', 'accession', accession],
+                                         capture_output=True, text=True)
+                with contextlib.suppress(json.JSONDecodeError, KeyError, IndexError):
+                    organisms[accession] = \
+                        json.loads(summary.stdout)['reports'][0]['organism']['organism_name']
+            with open(cache_file, 'w') as f:
+                json.dump(organisms, f)
+        return {contig: organisms.get(acc, acc) for contig, acc in accessions.items()}, []
 
     # ------------------------------------------------------------------ rRNA / tRNA
     @staticmethod

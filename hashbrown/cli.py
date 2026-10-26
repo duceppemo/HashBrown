@@ -370,12 +370,14 @@ def db_main(argv):
     parser = ArgumentParser(prog='hashbrown db',
                             description='Download the database of an optional QC module. '
                                         'BUSCO needs no step here: it fetches its lineages on first use.')
-    parser.add_argument('module', choices=['mash', 'checkm2', 'bakta', 'amrfinder', 'mob'],
-                        help='mash: RefSeq genome sketches for the species ID (~800 MB). '
+    parser.add_argument('module', choices=['mash', 'checkm2', 'bakta', 'amrfinder', 'mob', 'confindr'],
+                        help='mash: RefSeq genome sketches for the species ID and blob plot (~800 MB). '
                              'checkm2: the CheckM2 DIAMOND database (~3 GB). '
                              'bakta: the Bakta light database (~2 GB; needs bakta installed). '
                              'amrfinder: the AMRFinderPlus database (into its own share folder). '
-                             'mob: the MOB-suite database (into its own default folder).')
+                             'mob: the MOB-suite database (into its own default folder). '
+                             'confindr: the ConFindr rMLST core databases (full coverage needs a '
+                             'free PubMLST account, see the ConFindr docs).')
     parser.add_argument('--dir', default=db_dir(),
                         help='Database folder. Default: %(default)s (or $HASHBROWN_DB).')
     args = parser.parse_args(argv)
@@ -397,7 +399,8 @@ def db_main(argv):
         commands = {'checkm2': ['checkm2', 'database', '--download', '--path', target],
                     'bakta': ['bakta_db', 'download', '--output', target, '--type', 'light'],
                     'amrfinder': ['amrfinder', '-u'],
-                    'mob': ['mob_init']}
+                    'mob': ['mob_init'],
+                    'confindr': ['confindr_database_setup', '-o', target]}
         done = subprocess.run(commands[args.module])
         sys.exit(done.returncode)
 

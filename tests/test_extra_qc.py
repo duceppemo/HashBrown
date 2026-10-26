@@ -55,6 +55,29 @@ def test_phase3_modules_note_missing_tools(tmp_path, monkeypatch):
     assert results == {} and 'pgap.py' in notes[0]
 
 
+def test_phase4_modules_note_missing_tools(tmp_path, monkeypatch):
+    monkeypatch.setenv('PATH', str(tmp_path))
+    sample_obj = Sample()
+    sample_obj.illumina.raw = ['R1.fastq.gz', 'R2.fastq.gz']
+
+    results, notes = ExtraQcMethods.confindr('s', sample_obj, str(tmp_path), 1)
+    assert results == {} and 'ConFindr' in notes[0]
+
+    results, notes = ExtraQcMethods.genomescope('s', sample_obj, str(tmp_path / 'db'),
+                                                str(tmp_path), 1)
+    assert results == {} and 'GenomeScope2' in notes[0]
+
+    taxonomy, notes = ExtraQcMethods.contig_taxonomy('asm.fasta', str(tmp_path), 1)
+    assert taxonomy == {} and notes == []  # silent: the blob plot just goes uncolored
+
+
+def test_phase4_skipped_without_short_reads(tmp_path):
+    results, notes = ExtraQcMethods.confindr('s', Sample(), str(tmp_path), 1)
+    assert results == {} and notes == []
+    results, notes = ExtraQcMethods.genomescope('s', Sample(), str(tmp_path / 'db'), str(tmp_path), 1)
+    assert results == {} and notes == []
+
+
 def test_bakta_needs_database(stub_bin, tmp_path, monkeypatch):
     monkeypatch.setenv('HASHBROWN_DB', str(tmp_path / 'empty_db'))
     monkeypatch.delenv('BAKTA_DB', raising=False)

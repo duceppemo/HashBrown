@@ -77,6 +77,15 @@ def test_hybrid_pipeline(stub_bin, fastq_gz, tmp_path):
     assert 'AMRFinderPlus' in genes and 'VFDB' in genes and 'PlasmidFinder' in genes
     assert (report / 'tables' / 'sample1_plasmids.tsv').is_file()
 
+    # Phase 4: GenomeScope2 profile, ConFindr verdict and the blob plot
+    assert 'GenomeScope2' in page and '4,500,000 bp - 4,600,000 bp' in page
+    assert 'ConFindr verdict' in page and 'Clean' in page
+    assert 'Blob plot' in page
+    blob = (report / 'tables' / 'sample1_blob.tsv').read_text()
+    assert 'contig_1' in blob and 'Escherichia coli' in blob
+    assert 'confindr_status' in summary or 'confindr_status' in \
+        (report / 'tables' / 'sample1_identity_completeness.tsv').read_text()
+
     # No working leftovers
     assert not (out / '3_assembled_long' / 'sample1').exists()  # flye working folder
     assert not list((out / '6_polished_short').glob('*.sam'))

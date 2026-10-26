@@ -203,6 +203,10 @@ STUBS = {
     } > "$out"
     ''',
     'meryl': '''
+    if [ "$1" = "histogram" ]; then
+      printf '1\t5000\n20\t90000\n21\t95000\n22\t88000\n'
+      exit 0
+    fi
     out=""; prev=""
     for a in "$@"; do [ "$prev" = "output" ] && out=$a; prev=$a; done
     mkdir -p "$out"
@@ -212,7 +216,25 @@ STUBS = {
     ''',
     'mash': '''
     if [ "$1" = "--version" ]; then echo 2.3; exit 0; fi
-    printf 'refseq-NZ-GCF_000005845.2-Escherichia_coli.fna\tquery\t0.0010\t0\t995/1000\n'
+    printf 'refseq-NZ-GCF_000005845.2-Escherichia_coli.fna\tcontig_1\t0.0010\t0\t995/1000\n'
+    ''',
+    'confindr.py': '''
+    out=""; prev=""
+    for a in "$@"; do [ "$prev" = "-o" ] && out=$a; prev=$a; done
+    mkdir -p "$out"
+    printf 'Sample,Genus,NumContamSNVs,ContamStatus,PercentContam\n' > "$out/confindr_report.csv"
+    printf 'sample1,Escherichia,0,False,0.0\n' >> "$out/confindr_report.csv"
+    ''',
+    'genomescope2': '''
+    out=""; prev=""
+    for a in "$@"; do [ "$prev" = "-o" ] && out=$a; prev=$a; done
+    mkdir -p "$out"
+    {
+      echo "property                      min               max"
+      echo "Heterozygous (ab)             0.0101%           0.0105%"
+      echo "Genome Haploid Length         4,500,000 bp      4,600,000 bp"
+      echo "Read Error Rate               0.2%              0.2%"
+    } > "$out/summary.txt"
     ''',
     'datasets': '''
     if [ "$1" = "summary" ]; then
@@ -262,6 +284,10 @@ STUBS = {
     ''',
     'seqkit': '''
     if [ "$1" = "version" ]; then echo "seqkit v2.8.0"; exit 0; fi
+    if [ "$1" = "fx2tab" ]; then
+      printf 'contig_1\t12\t50.00\n'
+      exit 0
+    fi
     printf 'file\tformat\ttype\tnum_seqs\tsum_len\tN50\tAvgQual\tGC(%%)\n'
     prev=""
     for a in "$@"; do

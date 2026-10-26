@@ -23,8 +23,11 @@ Decisions taken (2026-10-26):
 - **AMR / typing — AMRFinderPlus + abricate (VFDB, PlasmidFinder)**, outputs normalized into one
   gene × tool table with hAMRonization. MLST via `mlst`; plasmid typing/mobility via MOB-suite.
   (RGI/CARD and ResFinder: not in scope — revisit on demand.)
-- **Contamination visual — built-in lightweight blob plot**: GC vs coverage per contig (mosdepth),
-  colored by sylph taxonomy (~2 GB prebuilt GTDB db). Full BlobToolKit stays a documented Docker extra.
+- **Contamination visual — built-in lightweight blob plot**: GC vs coverage per contig (mosdepth).
+  Implementation note (2026-10-26): colored by per-contig `mash dist -i` top hits against the RefSeq
+  sketch already used for species ID, named via NCBI datasets — not sylph, which profiles at sample
+  level and cannot color individual contigs. No new tool or database needed. Full BlobToolKit stays a
+  documented Docker extra.
 
 ## Report content
 
@@ -70,6 +73,9 @@ final QC, so every downstream coordinate refers to the fixed orientation.
 - **P3 — typing, AMR, annotation:** MLST, MOB-suite, AMRFinderPlus, abricate, hAMRonization table,
   Bakta default / PGAP opt-in.
 - **P4 — contamination:** ConFindr, sylph, built-in blob plot; GenomeScope2.
+
+Status 2026-10-26: all four phases implemented and pushed (P1 funnels/report, P2 identity &
+completeness, P3 typing/AMR/annotation, P4 contamination & GenomeScope2).
 
 Each phase lands as its own commit(s) with tests and wiki updates (Outputs.md gains a "Report" section;
 Usage.md the new flags: `--summary`, `--annotate`, `--qc-level`, `hashbrown db`).
