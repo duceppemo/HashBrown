@@ -55,13 +55,16 @@ for sample_dir in "$DATA"/*/; do
     reference="$sample_dir/reference.fasta"
     [ -s "$reference" ] || { echo "No reference.fasta for $sample, skipping" >&2; continue; }
 
-    # Stage the reads the way hashbrown expects them (one folder per technology)
+    # Stage the reads the way hashbrown expects them (one folder per technology). The link keeps
+    # the data folder's file name even when it is itself a symlink to a file named differently.
     long_dir="$OUT/$sample/reads_long"; short_dir="$OUT/$sample/reads_short"
     mkdir -p "$long_dir" "$short_dir"
-    ln -sf "$(realpath "$sample_dir/$sample"*_R1*.f*q.gz)" "$short_dir/"
-    ln -sf "$(realpath "$sample_dir/$sample"*_R2*.f*q.gz)" "$short_dir/"
     for f in "$sample_dir/$sample"*.f*q.gz; do
-        [[ $f == *_R1* || $f == *_R2* ]] || ln -sf "$(realpath "$f")" "$long_dir/"
+        name=$(basename "$f")
+        case "$name" in
+            *_R1*|*_R2*) ln -sf "$(realpath "$f")" "$short_dir/$name" ;;
+            *) ln -sf "$(realpath "$f")" "$long_dir/$name" ;;
+        esac
     done
 
     # Assemble once (no polishing), then copy that state for each combination and resume
