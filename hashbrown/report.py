@@ -746,7 +746,7 @@ td { border-bottom: 1px solid var(--line); }
 tr:nth-child(even) td { background: var(--soft); }
 tr.total td { border-top: 2px solid var(--line); border-bottom: none; font-weight: 700;
               background: none; }
-td.l { text-align: left; }
+td.l, th.l { text-align: left; }
 td.info { text-align: left; font-size: .78rem; color: var(--muted); }
 .versions td { font-size: .8rem; }
 
@@ -847,7 +847,7 @@ contam. {{ completeness.contamination }}%</div></div>
 <h2 id="qc-criteria">QC criteria<a class="anchor" href="#qc-criteria">#</a></h2>
 <table>
 <thead>
-<tr><th>Metric</th><th>Measured</th><th>Threshold</th><th>Status</th></tr>
+<tr><th>Metric</th><th>Measured</th><th class="l">Threshold</th><th>Status</th></tr>
 </thead>
 <tbody>
 {% for r in qc_rows %}
