@@ -416,7 +416,12 @@ class ReportMethods:
             'na' if ani is None else 'pass' if ani >= 95 else 'fail')
 
         verdict = (contamination or {}).get('confindr_status', '')
-        add('confindr', 'ConFindr (intra-species)', verdict or '-', 'Clean',
+        snvs = (contamination or {}).get('confindr_snvs', '')
+        # The raw SNV count stays visible next to the verdict: ConFindr's contamination
+        # threshold differs between genera, so the number lets the reader judge borderline calls
+        plural = '' if snvs == '1' else 's'
+        measured = f'{verdict} ({snvs} contaminating SNV{plural})' if verdict and snvs != '' else verdict or '-'
+        add('confindr', 'ConFindr (intra-species)', measured, 'Clean',
             'na' if not verdict else 'pass' if verdict.lower() == 'clean' else 'fail')
 
         # The headline: which MIMAG tier the assembly reaches
@@ -745,18 +750,18 @@ h2 .anchor { color: var(--line); text-decoration: none; margin-left: .4rem; font
 h2 .anchor:hover { color: var(--accent); }
 
 /* Tables: horizontal rules, zebra stripes, tabular figures */
-table { border-collapse: collapse; margin: .6rem 0 1rem; width: 100%;
+table { border-collapse: collapse; margin: .6rem 0 1rem; width: auto; max-width: 100%;
         font-variant-numeric: tabular-nums; }
-th, td { padding: .32rem .6rem; text-align: right; font-size: .86rem; }
-th:first-child, td:first-child { text-align: left; }
+th, td { padding: .32rem 1.1rem .32rem 0; text-align: left; font-size: .86rem; }
+th:last-child, td:last-child { padding-right: 0; }
 th { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
      color: var(--muted); border-bottom: 2px solid var(--accent); }
 td { border-bottom: 1px solid var(--line); }
 tr:nth-child(even) td { background: var(--soft); }
 tr.total td { border-top: 2px solid var(--line); border-bottom: none; font-weight: 700;
               background: none; }
-td.l, th.l { text-align: left; }
-td.info { text-align: left; font-size: .78rem; color: var(--muted); }
+td.l, th.l { text-align: left; }  /* kept: harmless now that every column is left-aligned */
+td.info { font-size: .78rem; color: var(--muted); }
 .versions td { font-size: .8rem; }
 
 /* The AMR table can run to hundreds of rows: scroll it on screen, print it in full */
@@ -846,7 +851,9 @@ contam. {{ completeness.contamination }}%</div></div>
 {% endif %}
 {% if contamination.confindr_status is defined %}
 <div class="card"><div class="k">ConFindr</div>
-<div class="v sm st-{{ qc_status.get('confindr', 'na') }}">{{ contamination.confindr_status }}</div>
+<div class="v sm st-{{ qc_status.get('confindr', 'na') }}">{{ contamination.confindr_status }}{%
+ if contamination.confindr_snvs is defined %} ({{ contamination.confindr_snvs }} SNV{{
+ '' if contamination.confindr_snvs == '1' else 's' }}){% endif %}</div>
 <div class="s">{{ contamination.confindr_genus }}</div></div>
 {% endif %}
 </div>
@@ -928,6 +935,10 @@ Q50 &asymp; 1 error/100 kb; higher is better).</p>
 {% if completeness or sanity %}
 <h2 id="completeness">Completeness &amp; sanity<a class="anchor" href="#completeness">#</a></h2>
 <table>
+<thead>
+<tr><th>Metric</th><th>Value</th></tr>
+</thead>
+<tbody>
 {% if completeness.completeness is defined %}
 <tr><td>CheckM2 completeness</td><td>{{ completeness.completeness }}%</td></tr>
 <tr><td>CheckM2 contamination</td><td>{{ completeness.contamination }}%</td></tr>
@@ -937,6 +948,7 @@ Q50 &asymp; 1 error/100 kb; higher is better).</p>
 {% endif %}
 {% if sanity.rrna is defined %}<tr><td>rRNA genes (barrnap)</td><td>{{ sanity.rrna }}</td></tr>{% endif %}
 {% if sanity.trna is defined %}<tr><td>tRNAs (tRNAscan-SE)</td><td>{{ sanity.trna }}</td></tr>{% endif %}
+</tbody>
 </table>
 {% endif %}
 
@@ -996,6 +1008,10 @@ PlasmidFinder: plasmid replicons.</p>
 <h2 id="genomescope">Read-based genome profile (GenomeScope2)<a class="anchor"
  href="#genomescope">#</a></h2>
 <table>
+<thead>
+<tr><th>Property</th><th>Value</th></tr>
+</thead>
+<tbody>
 {% if kmer.genome_size_estimate is defined %}
 <tr><td>Estimated haploid genome size</td><td>{{ kmer.genome_size_estimate }}</td></tr>
 {% endif %}
@@ -1005,6 +1021,7 @@ PlasmidFinder: plasmid replicons.</p>
 {% if kmer.read_error_rate is defined %}
 <tr><td>Read error rate</td><td>{{ kmer.read_error_rate }}</td></tr>
 {% endif %}
+</tbody>
 </table>
 <p class="muted">From the short-read 21-mers, independent of the assembly: a size estimate far from the
 assembly size, or non-zero heterozygosity, points at contamination or a mixed culture.</p>
@@ -1056,11 +1073,16 @@ are contamination candidates.</figcaption></figure>
 {% if versions or cmdline %}
 <h2 id="traceability">Traceability<a class="anchor" href="#traceability">#</a></h2>
 <table>
+<thead>
+<tr><th>Item</th><th>Value</th></tr>
+</thead>
+<tbody>
 <tr><td>HashBrown</td><td class="l">v{{ version }}</td></tr>
 <tr><td>Report generated</td><td class="l">{{ timestamp }}</td></tr>
 {% if cmdline %}
 <tr><td>Command line</td><td class="l"><code class="cmd">{{ cmdline }}</code></td></tr>
 {% endif %}
+</tbody>
 </table>
 {% if versions %}
 <h3>Software versions</h3>
