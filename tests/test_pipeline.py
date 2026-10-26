@@ -67,6 +67,16 @@ def test_hybrid_pipeline(stub_bin, fastq_gz, tmp_path):
     summary = (report / 'tables' / 'sample1_identity_completeness.tsv').read_text()
     assert 'completeness' in summary and 'ani' in summary
 
+    # Phase 3: typing, genes, annotation
+    assert 'ecoli' in page and 'ST' in page  # MLST, also in the index
+    assert 'ecoli ST10' in (report / 'index.html').read_text()
+    assert 'plasmid_AA474' in page and 'IncFIB' in page  # MOB-suite
+    assert 'blaEC' in page and 'gene_vfdb' in page and 'gene_plasmidfinder' in page
+    assert 'Bakta: 4300 CDSs, 86 tRNAs, 22 rRNAs' in page
+    genes = (report / 'tables' / 'sample1_amr_virulence.tsv').read_text()
+    assert 'AMRFinderPlus' in genes and 'VFDB' in genes and 'PlasmidFinder' in genes
+    assert (report / 'tables' / 'sample1_plasmids.tsv').is_file()
+
     # No working leftovers
     assert not (out / '3_assembled_long' / 'sample1').exists()  # flye working folder
     assert not list((out / '6_polished_short').glob('*.sam'))

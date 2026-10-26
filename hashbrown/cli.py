@@ -85,6 +85,11 @@ def parse_arguments(argv=None):
     parser.add_argument('--ion-torrent',
                         action='store_true',
                         help='The short reads are Ion Torrent data (SPAdes assemblies only).')
+    parser.add_argument('--annotate',
+                        choices=['auto', 'bakta', 'pgap', 'none'], default='auto',
+                        help='Genome annotation in the report. "auto" (default) runs Bakta when it and '
+                             'its database are installed; "pgap" runs NCBI PGAP via Docker '
+                             '(submission-grade, ~1 h per genome); "none" skips annotation.')
     parser.add_argument('-t', '--threads', metavar=str(max_cpu),
                         type=int, default=max_cpu,
                         help=f'Number of threads. Default is all ({max_cpu}).')
@@ -141,6 +146,7 @@ class HashBrown:
         self.model = args.model
         self.short_polishers = SHORT_POLISHERS[args.short_polisher]
         self.ion_torrent = args.ion_torrent
+        self.annotate = args.annotate
 
         # Performance
         self.cpu = args.threads
@@ -301,7 +307,8 @@ class HashBrown:
 
         # Report
         print('Building the report...')
-        ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '8_report'), 'long', self.cpu)
+        ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '8_report'), 'long',
+                                    self.cpu, self.annotate)
 
     def run_short(self):
         """Short read assembly with SKESA or SPAdes (single-end or paired-end)."""
@@ -351,7 +358,8 @@ class HashBrown:
 
         # Report
         print('Building the report...')
-        ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '4_report'), 'short', self.cpu)
+        ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '4_report'), 'short',
+                                    self.cpu, self.annotate)
 
 
 MASH_SKETCH_URL = 'https://gembox.cbcb.umd.edu/mash/refseq.genomes.k21s1000.msh'
@@ -362,9 +370,12 @@ def db_main(argv):
     parser = ArgumentParser(prog='hashbrown db',
                             description='Download the database of an optional QC module. '
                                         'BUSCO needs no step here: it fetches its lineages on first use.')
-    parser.add_argument('module', choices=['mash', 'checkm2'],
+    parser.add_argument('module', choices=['mash', 'checkm2', 'bakta', 'amrfinder', 'mob'],
                         help='mash: RefSeq genome sketches for the species ID (~800 MB). '
-                             'checkm2: the CheckM2 DIAMOND database (~3 GB).')
+                             'checkm2: the CheckM2 DIAMOND database (~3 GB). '
+                             'bakta: the Bakta light database (~2 GB; needs bakta installed). '
+                             'amrfinder: the AMRFinderPlus database (into its own share folder). '
+                             'mob: the MOB-suite database (into its own default folder).')
     parser.add_argument('--dir', default=db_dir(),
                         help='Database folder. Default: %(default)s (or $HASHBROWN_DB).')
     args = parser.parse_args(argv)
@@ -381,9 +392,13 @@ def db_main(argv):
         urlretrieve(MASH_SKETCH_URL, sketch + '.part')
         os.rename(sketch + '.part', sketch)
         print(f'Done: {sketch}')
-    else:  # checkm2
+    else:
         import subprocess
-        done = subprocess.run(['checkm2', 'database', '--download', '--path', target])
+        commands = {'checkm2': ['checkm2', 'database', '--download', '--path', target],
+                    'bakta': ['bakta_db', 'download', '--output', target, '--type', 'light'],
+                    'amrfinder': ['amrfinder', '-u'],
+                    'mob': ['mob_init']}
+        done = subprocess.run(commands[args.module])
         sys.exit(done.returncode)
 
 

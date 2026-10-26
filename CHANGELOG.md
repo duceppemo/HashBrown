@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- **Typing, AMR and annotation in the report** (reporting phase 3), optional modules like the rest:
+  MLST (scheme/ST also on the run index), MOB-suite plasmid reconstruction and typing, one merged
+  gene table from AMRFinderPlus (resistance), abricate+VFDB (virulence) and abricate+PlasmidFinder
+  (replicons), and genome annotation — Bakta by default when installed, NCBI PGAP via Docker with
+  `--annotate pgap` (new flag: `--annotate {auto,bakta,pgap,none}`). `hashbrown db` gains the
+  `bakta`, `amrfinder` and `mob` modules.
 - **Optional QC modules** (reporting phase 2), auto-detected at runtime and reported as skipped-with-a-hint
   when not installed: **dnaapler** reorients every final assembly in place (chromosome to *dnaA*, plasmids
   to *rep*; the input order is kept next to it as `<sample>_unoriented.fasta`, and dot plots keep comparing

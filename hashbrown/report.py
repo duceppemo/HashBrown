@@ -241,7 +241,8 @@ class ReportMethods:
 
     @staticmethod
     def write_tables(tables_folder, sample, funnels, assembly_rows, contigs_long, contigs_short,
-                     identity=None, completeness=None, sanity=None):
+                     identity=None, completeness=None, sanity=None,
+                     typing=None, plasmids=None, genes=None):
         """Every report table as machine-readable TSV."""
         Methods.make_folder(tables_folder)
 
@@ -257,9 +258,13 @@ class ReportMethods:
                                          'coverage', 'kept'], funnel['rows'])
         if assembly_rows:
             write('assembly_funnel', ['stage', 'contigs', 'size', 'n50', 'gc', 'qv'], assembly_rows)
-        summary = {**(identity or {}), **(completeness or {}), **(sanity or {})}
+        summary = {**(identity or {}), **(completeness or {}), **(sanity or {}), **(typing or {})}
         if summary:
             write('identity_completeness', list(summary), [summary])
+        if plasmids:
+            write('plasmids', ['plasmid', 'size', 'rep', 'relaxase', 'mobility'], plasmids)
+        if genes:
+            write('amr_virulence', ['gene', 'source', 'identity', 'coverage', 'contig', 'info'], genes)
         cov_rows = [{'contig': c['contig'], 'length': c['length'], 'read_type': t, 'mean_coverage': c['mean']}
                     for t, contigs in (('long', contigs_long), ('short', contigs_short)) for c in contigs]
         if cov_rows:
@@ -283,7 +288,7 @@ class ReportMethods:
 
     @staticmethod
     def build_report(sample, sample_obj, report_folder, stage_fastas, mosdepth_long, mosdepth_short,
-                     links, cpu):
+                     links, cpu, annotate='auto'):
         """Collect everything for one sample and render <sample>.html (+ .pdf); returns a summary dict."""
         notes = []
         genome_size = 0
@@ -325,6 +330,22 @@ class ReportMethods:
             for row in assembly_rows:
                 row['qv'] = qv_map.get(row['stage'], '-')
 
+        # Typing, genes and annotation (phase 3)
+        typing, plasmids, genes, annotation = {}, [], [], {}
+        if final_assembly and os.path.exists(final_assembly):
+            typing, mlst_notes = ExtraQcMethods.mlst(sample, final_assembly)
+            notes += mlst_notes
+            plasmids, mob_notes = ExtraQcMethods.mob_suite(sample, final_assembly, qc_work, cpu)
+            notes += mob_notes
+            genes, amr_notes = ExtraQcMethods.amr_virulence(sample, final_assembly, qc_work, cpu)
+            notes += amr_notes
+            annotation, annotation_notes = ExtraQcMethods.annotate(
+                sample, final_assembly, qc_work, cpu, annotate, identity.get('organism', ''))
+            notes += annotation_notes
+            if annotation.get('gff'):
+                links.append((f"Annotation ({annotation['tool']}, GFF3)",
+                              os.path.relpath(annotation['gff'], report_folder)))
+
         # Figures
         read_figs = []
         for funnel in funnels:
@@ -359,7 +380,8 @@ class ReportMethods:
 
         ReportMethods.write_tables(os.path.join(report_folder, 'tables'), sample, funnels,
                                    assembly_rows, contigs_long, contigs_short,
-                                   identity, completeness, sanity)
+                                   identity, completeness, sanity,
+                                   typing=typing, plasmids=plasmids, genes=genes)
 
         # Per-contig coverage, long and short side by side
         short_map = {c['contig']: c['mean'] for c in contigs_short}
@@ -380,6 +402,7 @@ class ReportMethods:
                 sampled=SAMPLED_READS, funnels=funnels, read_figs=read_figs,
                 assembly_rows=assembly_rows, cov_rows=cov_rows, cov_total=cov_total,
                 cov_fig=cov_fig, identity=identity, completeness=completeness, sanity=sanity,
+                typing=typing, plasmids=plasmids, genes=genes, annotation=annotation,
                 links=links + pycoqc_links, notes=notes))
         ReportMethods.render_pdf(html_file, notes)
 
@@ -387,10 +410,11 @@ class ReportMethods:
         return {'sample': sample, 'contigs': final.get('contigs', '-'), 'size': final.get('size', '-'),
                 'n50': final.get('n50', '-'),
                 'long_cov': f"{total_long['mean']:.0f}x" if total_long else '-',
-                'short_cov': f"{total_short['mean']:.0f}x" if total_short else '-'}
+                'short_cov': f"{total_short['mean']:.0f}x" if total_short else '-',
+                'st': f"{typing['scheme']} ST{typing['st']}" if typing else '-'}
 
     @staticmethod
-    def build_reports(sample_dict, output_folder, report_folder, mode, cpu):
+    def build_reports(sample_dict, output_folder, report_folder, mode, cpu, annotate='auto'):
         """One report per sample plus the run-level index.html comparing them."""
         Methods.make_folder(report_folder)
         qc = os.path.join(output_folder, '7_assembly_qc' if mode == 'long' else '3_assembly_qc')
@@ -419,7 +443,8 @@ class ReportMethods:
             if os.path.exists(graph):
                 links.append(('Assembly graph (Bandage)', os.path.relpath(graph, report_folder)))
             summaries.append(ReportMethods.build_report(sample, sample_obj, report_folder, stage_fastas,
-                                                        mosdepth_long, mosdepth_short, links, cpu))
+                                                        mosdepth_long, mosdepth_short, links, cpu,
+                                                        annotate))
 
         with open(os.path.join(report_folder, 'index.html'), 'w') as f:
             f.write(Template(INDEX_TEMPLATE).render(version=__version__, date=date.today().isoformat(),
@@ -511,6 +536,43 @@ Q50 &asymp; 1 error/100 kb; higher is better).</p>
 </table>
 {% endif %}
 
+{% if typing or plasmids %}
+<h2>Typing</h2>
+{% if typing %}
+<table>
+<tr><th>MLST scheme</th><th>ST</th><th>Alleles</th></tr>
+<tr><td>{{ typing.scheme }}</td><td>{{ typing.st }}</td><td>{{ typing.alleles }}</td></tr>
+</table>
+{% endif %}
+{% if plasmids %}
+<table>
+<tr><th>Plasmid (MOB-suite)</th><th>Size (bp)</th><th>Replicon</th><th>Relaxase</th><th>Mobility</th></tr>
+{% for p in plasmids %}
+<tr><td>{{ p.plasmid }}</td><td>{{ p.size }}</td><td>{{ p.rep }}</td>
+<td>{{ p.relaxase }}</td><td>{{ p.mobility }}</td></tr>
+{% endfor %}
+</table>
+{% endif %}
+{% endif %}
+
+{% if genes %}
+<h2>AMR &amp; virulence genes</h2>
+<table>
+<tr><th>Gene</th><th>Source</th><th>%Identity</th><th>%Coverage</th><th>Contig</th><th>Class / product</th></tr>
+{% for g in genes %}
+<tr><td>{{ g.gene }}</td><td>{{ g.source }}</td><td>{{ g.identity }}</td>
+<td>{{ g.coverage }}</td><td>{{ g.contig }}</td><td>{{ g.info }}</td></tr>
+{% endfor %}
+</table>
+<p class="muted">AMRFinderPlus: resistance genes and point mutations. VFDB: virulence factors.
+PlasmidFinder: plasmid replicons.</p>
+{% endif %}
+
+{% if annotation %}
+<h2>Annotation</h2>
+<p>{{ annotation.tool }}: {{ annotation.summary }}</p>
+{% endif %}
+
 {% if cov_rows %}
 <h2>Coverage per contig (mosdepth)</h2>
 <table>
@@ -544,11 +606,11 @@ INDEX_TEMPLATE = """<!doctype html>
 <p class="muted">HashBrown v{{ version }} &middot; {{ date }}</p>
 <table>
 <tr><th>Sample</th><th>Contigs</th><th>Size (bp)</th><th>N50</th>
-<th>Long-read cov.</th><th>Short-read cov.</th></tr>
+<th>Long-read cov.</th><th>Short-read cov.</th><th>MLST</th></tr>
 {% for s in summaries %}
 <tr><td><a href="{{ s.sample }}.html">{{ s.sample }}</a></td>
 <td>{{ s.contigs }}</td><td>{{ s.size }}</td><td>{{ s.n50 }}</td>
-<td>{{ s.long_cov }}</td><td>{{ s.short_cov }}</td></tr>
+<td>{{ s.long_cov }}</td><td>{{ s.short_cov }}</td><td>{{ s.st }}</td></tr>
 {% endfor %}
 </table>
 </body></html>

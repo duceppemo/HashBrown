@@ -4,6 +4,7 @@ Every module runs only when its tool (and database, where one is needed) is avai
 returns empty results plus a note saying how to enable it. Nothing here may ever fail the pipeline.
 """
 
+import csv
 import glob
 import json
 import os
@@ -284,3 +285,158 @@ class ExtraQcMethods:
                 if len(fields) >= 3:
                     return f'{float(fields[2]):.2f}%'
         return ''
+
+    # ------------------------------------------------------------------ MLST
+    @staticmethod
+    def mlst(sample, assembly):
+        """Classic 7-gene typing; returns ({'scheme':, 'st':, 'alleles':}, notes)."""
+        if _missing('mlst'):
+            return {}, ['MLST skipped: not installed (conda install mlst).']
+        done = subprocess.run(['mlst', '--nopath', '--quiet', assembly], capture_output=True, text=True)
+        fields = done.stdout.strip().split('\t')
+        if done.returncode != 0 or len(fields) < 3:
+            return {}, ['MLST failed: no scheme matched.']
+        return {'scheme': fields[1], 'st': fields[2], 'alleles': ' '.join(fields[3:])}, []
+
+    # ------------------------------------------------------------------ MOB-suite
+    @staticmethod
+    def mob_suite(sample, assembly, work, cpu):
+        """Plasmid reconstruction and typing; returns (one row per plasmid, notes)."""
+        if _missing('mob_recon'):
+            return [], ['Plasmid typing skipped: MOB-suite is not installed '
+                        '(conda install mob_suite, then hashbrown db mob).']
+        out = os.path.join(work, 'mob_recon')
+        results = os.path.join(out, 'mobtyper_results.txt')
+        contig_report = os.path.join(out, 'contig_report.txt')
+        if not os.path.exists(contig_report):
+            _run(['mob_recon', '-i', assembly, '-o', out, '-n', str(cpu), '--force'])
+        if not os.path.exists(contig_report):
+            return [], ['Plasmid typing failed: see MOB-suite logs '
+                        '(its database comes with hashbrown db mob).']
+        if not os.path.exists(results):
+            return [], ['MOB-suite: no plasmids detected.']
+        rows = []
+        with open(results) as f:
+            for row in csv.DictReader(f, delimiter='\t'):
+                rows.append({'plasmid': row.get('sample_id', '-').split(':')[-1],
+                             'size': row.get('size', '-'),
+                             'rep': row.get('rep_type(s)', '-') or '-',
+                             'relaxase': row.get('relaxase_type(s)', '-') or '-',
+                             'mobility': row.get('predicted_mobility', '-')})
+        return rows, []
+
+    # ------------------------------------------------------------------ AMR + virulence
+    @staticmethod
+    def amr_virulence(sample, assembly, work, cpu):
+        """AMRFinderPlus plus abricate (VFDB, PlasmidFinder), merged into one gene table."""
+        rows, notes = [], []
+
+        def field(row, *names):
+            for name in names:
+                if row.get(name) not in (None, ''):
+                    return row[name]
+            return '-'
+
+        if _missing('amrfinder'):
+            notes.append('AMR genes skipped: AMRFinderPlus is not installed '
+                         '(conda install ncbi-amrfinderplus, then hashbrown db amrfinder).')
+        else:
+            out = os.path.join(work, 'amrfinder.tsv')
+            if not os.path.exists(out):
+                _run(['amrfinder', '-n', assembly, '--plus', '--threads', str(cpu), '-o', out])
+            if not os.path.exists(out):
+                notes.append('AMRFinderPlus failed: is its database installed? '
+                             '(hashbrown db amrfinder)')
+            else:
+                with open(out) as f:
+                    for row in csv.DictReader(f, delimiter='\t'):
+                        rows.append({
+                            'gene': field(row, 'Gene symbol', 'Element symbol'),
+                            'source': 'AMRFinderPlus',
+                            'identity': field(row, '% Identity to reference sequence',
+                                              '% Identity to reference'),
+                            'coverage': field(row, '% Coverage of reference sequence',
+                                              '% Coverage of reference'),
+                            'contig': field(row, 'Contig id'),
+                            'info': ' / '.join(x for x in (field(row, 'Class'), field(row, 'Subclass'))
+                                               if x != '-') or field(row, 'Sequence name'),
+                        })
+
+        if _missing('abricate'):
+            notes.append('Virulence/replicon screens skipped: abricate is not installed '
+                         '(conda install abricate).')
+        else:
+            for db, label in (('vfdb', 'VFDB'), ('plasmidfinder', 'PlasmidFinder')):
+                out = os.path.join(work, f'abricate_{db}.tsv')
+                if not os.path.exists(out):
+                    with open(out + '.part', 'w') as f:
+                        done = subprocess.run(['abricate', '--db', db, '--nopath', assembly],
+                                              stdout=f, stderr=subprocess.DEVNULL)
+                    if done.returncode == 0:
+                        os.rename(out + '.part', out)
+                if not os.path.exists(out):
+                    notes.append(f'abricate --db {db} failed.')
+                    continue
+                with open(out) as f:
+                    text = f.read().lstrip('#')
+                for row in csv.DictReader(text.splitlines(), delimiter='\t'):
+                    rows.append({'gene': field(row, 'GENE'), 'source': label,
+                                 'identity': field(row, '%IDENTITY'),
+                                 'coverage': field(row, '%COVERAGE'),
+                                 'contig': field(row, 'SEQUENCE'),
+                                 'info': field(row, 'PRODUCT', 'RESISTANCE')})
+        return rows, notes
+
+    # ------------------------------------------------------------------ annotation
+    @staticmethod
+    def annotate(sample, assembly, work, cpu, mode='auto', organism=''):
+        """Genome annotation: Bakta by default, PGAP on request; returns (result dict, notes)."""
+        if mode == 'none':
+            return {}, []
+        if mode == 'pgap':
+            return ExtraQcMethods._pgap(sample, assembly, work, cpu, organism)
+        if _missing('bakta'):
+            return {}, ['Annotation skipped: Bakta is not installed '
+                        '(conda install bakta, then hashbrown db bakta).']
+        db = os.environ.get('BAKTA_DB', '')
+        if not db:
+            versions = glob.glob(os.path.join(db_dir(), 'bakta', '**', 'version.json'),
+                                 recursive=True)
+            db = os.path.dirname(versions[0]) if versions else ''
+        if not db:
+            return {}, ['Annotation skipped: no Bakta database (run hashbrown db bakta).']
+        out = os.path.join(work, 'bakta')
+        summary_file = os.path.join(out, f'{sample}.txt')
+        if not os.path.exists(summary_file):
+            _run(['bakta', '--db', db, '--output', out, '--prefix', sample,
+                  '--threads', str(cpu), '--force', '--skip-plot', assembly])
+        if not os.path.exists(summary_file):
+            return {}, ['Bakta failed: see its logs.']
+        counts = {}
+        with open(summary_file) as f:
+            for line in f:
+                match = re.match(r'^(CDSs|tRNAs|rRNAs|ncRNAs|CRISPR arrays):\s*(\d+)', line.strip())
+                if match:
+                    counts[match.group(1)] = match.group(2)
+        summary = ', '.join(f'{count} {name}' for name, count in counts.items()) or 'done'
+        gff = os.path.join(out, f'{sample}.gff3')
+        return {'tool': 'Bakta', 'summary': summary,
+                'gff': gff if os.path.exists(gff) else ''}, []
+
+    @staticmethod
+    def _pgap(sample, assembly, work, cpu, organism):
+        """NCBI PGAP via its pgap.py wrapper (Docker); submission-grade but slow. Experimental."""
+        if _missing('pgap.py'):
+            return {}, ['PGAP skipped: pgap.py is not on the PATH '
+                        '(github.com/ncbi/pgap; it needs Docker and ~30 GB).']
+        if not organism or organism == '-':
+            return {}, ['PGAP skipped: it needs the species name — '
+                        'enable the species ID module (hashbrown db mash) first.']
+        out = os.path.join(work, 'pgap')
+        gff = os.path.join(out, 'annot.gff')
+        if not os.path.exists(gff):
+            _run(['pgap.py', '--no-self-update', '--cpus', str(cpu), '-o', out,
+                  '-g', assembly, '-s', organism])
+        if not os.path.exists(gff):
+            return {}, ['PGAP failed: see its logs in the report qc folder.']
+        return {'tool': 'PGAP', 'summary': 'finished (annot.gff)', 'gff': gff}, []

@@ -58,12 +58,22 @@ installed** (any missing one is reported as "skipped" with the install hint, nev
 | CheckM2 | completeness / contamination | `conda install checkm2` |
 | BUSCO | single-copy ortholog completeness (auto-lineage) | `conda install busco` |
 | barrnap, tRNAscan-SE | rRNA / tRNA sanity counts | `conda install barrnap trnascan-se` |
+| mlst | 7-gene MLST scheme and sequence type | `conda install mlst` |
+| MOB-suite | plasmid reconstruction, replicon/relaxase typing, mobility | `conda install mob_suite` |
+| AMRFinderPlus | resistance genes and point mutations | `conda install ncbi-amrfinderplus` |
+| abricate | virulence factors (VFDB) and plasmid replicons (PlasmidFinder) | `conda install abricate` |
+| Bakta | genome annotation (default when installed; `--annotate none` to skip) | `conda install bakta` |
+| PGAP | submission-grade NCBI annotation via Docker (`--annotate pgap`, ~1 h/genome) | [ncbi/pgap](https://github.com/ncbi/pgap) |
 
-Two modules need a local database first (default `~/.hashbrown/db`, override with `$HASHBROWN_DB`):
+Some modules need a local database first (default `~/.hashbrown/db`, override with `$HASHBROWN_DB`;
+AMRFinderPlus and MOB-suite manage their own locations):
 
 ```bash
-hashbrown db mash      # RefSeq genome sketches for the species ID (~800 MB)
-hashbrown db checkm2   # CheckM2 DIAMOND database (~3 GB)
+hashbrown db mash       # RefSeq genome sketches for the species ID (~800 MB)
+hashbrown db checkm2    # CheckM2 DIAMOND database (~3 GB)
+hashbrown db bakta      # Bakta light database (~2 GB)
+hashbrown db amrfinder  # AMRFinderPlus database
+hashbrown db mob        # MOB-suite database
 ```
 
 Install the heavy ones in their own conda env if they ever conflict with HashBrown's — the pipeline only

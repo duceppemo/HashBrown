@@ -228,6 +228,38 @@ STUBS = {
     for a in "$@"; do [ "$prev" = "-o" ] && out=$a; prev=$a; done
     printf 'q\tr\t99.99\t50\t50\n' > "$out"
     ''',
+    'mlst': '''
+    for a in "$@"; do in=$a; done
+    printf '%s\tecoli\t10\tadk(10) fumC(11)\n' "$in"
+    ''',
+    'mob_recon': '''
+    out=""; prev=""
+    for a in "$@"; do [ "$prev" = "-o" ] && out=$a; prev=$a; done
+    mkdir -p "$out"
+    printf 'sample_id\tmolecule_type\n' > "$out/contig_report.txt"
+    printf 'sample_id\tsize\trep_type(s)\trelaxase_type(s)\tpredicted_mobility\n' > "$out/mobtyper_results.txt"
+    printf 'asm:plasmid_AA474\t89000\tIncFIB\tMOBF\tconjugative\n' >> "$out/mobtyper_results.txt"
+    ''',
+    'amrfinder': '''
+    [ "$1" = "-u" ] && exit 0
+    out=""; prev=""
+    for a in "$@"; do [ "$prev" = "-o" ] && out=$a; prev=$a; done
+    printf 'Gene symbol\tSequence name\tClass\tSubclass\t%% Coverage of reference sequence\t%% Identity to reference sequence\tContig id\n' > "$out"
+    printf 'blaEC\tclass C beta-lactamase\tBETA-LACTAM\tCEPHALOSPORIN\t100.00\t99.75\tcontig_1\n' >> "$out"
+    ''',
+    'abricate': '''
+    db=""; prev=""
+    for a in "$@"; do [ "$prev" = "--db" ] && db=$a; prev=$a; done
+    printf '#FILE\tSEQUENCE\tSTART\tEND\tSTRAND\tGENE\tCOVERAGE\tCOVERAGE_MAP\tGAPS\t%%COVERAGE\t%%IDENTITY\tDATABASE\tACCESSION\tPRODUCT\tRESISTANCE\n'
+    printf 'asm\tcontig_1\t10\t500\t+\tgene_%s\t1-490/490\t===\t0/0\t100.00\t98.00\t%s\tACC\tsome product\t\n' "$db" "$db"
+    ''',
+    'bakta': '''
+    out=""; prefix=""; prev=""
+    for a in "$@"; do [ "$prev" = "--output" ] && out=$a; [ "$prev" = "--prefix" ] && prefix=$a; prev=$a; done
+    mkdir -p "$out"
+    { echo "CDSs: 4300"; echo "tRNAs: 86"; echo "rRNAs: 22"; } > "$out/$prefix.txt"
+    : > "$out/$prefix.gff3"
+    ''',
     'seqkit': '''
     if [ "$1" = "version" ]; then echo "seqkit v2.8.0"; exit 0; fi
     printf 'file\tformat\ttype\tnum_seqs\tsum_len\tN50\tAvgQual\tGC(%%)\n'
@@ -274,6 +306,8 @@ def stub_bin(tmp_path_factory, monkeypatch):
     db_dir = tmp_path_factory.mktemp('stub_db')
     (db_dir / 'mash').mkdir()
     (db_dir / 'mash' / 'refseq.msh').write_bytes(b'stub')
+    (db_dir / 'bakta' / 'db-light').mkdir(parents=True)
+    (db_dir / 'bakta' / 'db-light' / 'version.json').write_text('{}')
     monkeypatch.setenv('HASHBROWN_DB', str(db_dir))
     return bin_dir
 

@@ -32,6 +32,36 @@ def test_species_ani_without_sketch(stub_bin, tmp_path, monkeypatch):
     assert results == {} and 'hashbrown db mash' in notes[0]
 
 
+def test_phase3_modules_note_missing_tools(tmp_path, monkeypatch):
+    monkeypatch.setenv('PATH', str(tmp_path))
+
+    results, notes = ExtraQcMethods.mlst('s', 'asm.fasta')
+    assert results == {} and 'mlst' in notes[0]
+
+    rows, notes = ExtraQcMethods.mob_suite('s', 'asm.fasta', str(tmp_path), 1)
+    assert rows == [] and 'MOB-suite' in notes[0]
+
+    rows, notes = ExtraQcMethods.amr_virulence('s', 'asm.fasta', str(tmp_path), 1)
+    assert rows == [] and len(notes) == 2  # AMRFinderPlus and abricate
+
+    results, notes = ExtraQcMethods.annotate('s', 'asm.fasta', str(tmp_path), 1, mode='auto')
+    assert results == {} and 'Bakta' in notes[0]
+
+    results, notes = ExtraQcMethods.annotate('s', 'asm.fasta', str(tmp_path), 1, mode='none')
+    assert results == {} and notes == []
+
+    results, notes = ExtraQcMethods.annotate('s', 'asm.fasta', str(tmp_path), 1, mode='pgap',
+                                             organism='Escherichia coli')
+    assert results == {} and 'pgap.py' in notes[0]
+
+
+def test_bakta_needs_database(stub_bin, tmp_path, monkeypatch):
+    monkeypatch.setenv('HASHBROWN_DB', str(tmp_path / 'empty_db'))
+    monkeypatch.delenv('BAKTA_DB', raising=False)
+    results, notes = ExtraQcMethods.annotate('s', 'asm.fasta', str(tmp_path), 1, mode='bakta')
+    assert results == {} and 'hashbrown db bakta' in notes[0]
+
+
 def test_reorient_skipped_without_dnaapler(tmp_path, monkeypatch):
     monkeypatch.setenv('PATH', str(tmp_path))
     done_flag = tmp_path / 'done_reorienting'
