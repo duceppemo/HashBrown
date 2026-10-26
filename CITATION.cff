@@ -5,8 +5,8 @@ title: "HashBrown: long-read, short-read and hybrid bacterial genome assembly pi
 authors:
   - family-names: Duceppe
     given-names: Marc-Olivier
-version: 1.0.0
-date-released: 2026-10-24
+version: 1.1.0
+date-released: 2026-10-26
 license: MIT
 repository-code: "https://github.com/duceppemo/HashBrown"
 url: "https://github.com/duceppemo/HashBrown"

@@ -20,7 +20,7 @@ mkdir -p "$OUT/reads_long"
 ln -sf "$(realpath "$READS")" "$OUT/reads_long/$(basename "$READS")"
 
 # Assemble once, no polishing
-hashbrown -l "$OUT/reads_long" -o "$OUT/none" --no-trim-long --no-filter-long --no-trim-short --long-polisher none -t "$THREADS" -p 1
+hashbrown -l "$OUT/reads_long" -o "$OUT/none" --no-trim-long --no-filter-long --no-trim-short --skip-report --long-polisher none -t "$THREADS" -p 1
 
 declare -A MODELS=(
   [medaka_sup_v4.3.0]=r1041_e82_400bps_sup_v4.3.0
@@ -29,9 +29,9 @@ declare -A MODELS=(
 for arm in "${!MODELS[@]}"; do
     if [ ! -d "$OUT/$arm" ]; then
         cp -r "$OUT/none" "$OUT/$arm"
-        rm -rf "$OUT/$arm/4_polished_long" "$OUT/$arm/done_polishing_long" "$OUT/$arm/7_assembly_qc"
+        rm -rf "$OUT/$arm/8_report" "$OUT/$arm/4_polished_long" "$OUT/$arm/done_polishing_long" "$OUT/$arm/7_assembly_qc"
     fi
-    hashbrown -l "$OUT/reads_long" -o "$OUT/$arm" --no-trim-long --no-filter-long --no-trim-short --model "${MODELS[$arm]}" -t "$THREADS" -p 1
+    hashbrown -l "$OUT/reads_long" -o "$OUT/$arm" --no-trim-long --no-filter-long --no-trim-short --skip-report --model "${MODELS[$arm]}" -t "$THREADS" -p 1
 done
 
 SUMMARY=$OUT/mbwgs426_results.tsv

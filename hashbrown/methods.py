@@ -2,6 +2,7 @@
 
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -225,23 +226,29 @@ class Methods:
                         continue
                     sample_dict[sample] = Sample()
 
-                if '_R1' in filename:
+                if re.search(r'_R1(?=[._])', filename):  # not _R10: the mate tag ends at . or _
                     sample_dict[sample].illumina.raw.insert(0, file_path)
                 else:  # _R2 of a pair, or a single-end sample
                     sample_dict[sample].illumina.raw.append(file_path)
 
-        # A sample is a pair or one single-end file; with more files than that, keep the pair
+        # A sample is a pair or one single-end file; with more files than that, keep a clean
+        # pair if there is exactly one - anything else is ambiguous and must not be guessed at
         for sample, sample_obj in sample_dict.items():
             reads = sample_obj.illumina.raw
             if len(reads) > 2:
-                pair = [f for f in reads if '_R1' in os.path.basename(f)] + \
-                       [f for f in reads if '_R2' in os.path.basename(f)]
-                kept = pair[:2] if len(pair) == 2 else reads[:1]
-                for extra in reads:
-                    if extra not in kept:
-                        sys.stderr.write(f'Too many short-read files for {sample}: '
-                                         f'ignoring {os.path.basename(extra)}.\n')
-                sample_obj.illumina.raw = kept
+                r1 = [f for f in reads if re.search(r'_R1(?=[._])', os.path.basename(f))]
+                r2 = [f for f in reads if re.search(r'_R2(?=[._])', os.path.basename(f))]
+                if len(r1) == 1 and len(r2) == 1:
+                    for extra in reads:
+                        if extra not in r1 + r2:
+                            sys.stderr.write(f'Too many short-read files for {sample}: '
+                                             f'ignoring {os.path.basename(extra)}.\n')
+                    sample_obj.illumina.raw = r1 + r2
+                else:
+                    names = ', '.join(sorted(os.path.basename(f) for f in reads))
+                    raise Exception(f'ambiguous short-read files for "{sample}" ({names}): '
+                                    'give one _R1/_R2 pair or one single-end file '
+                                    '(merge lanes beforehand).')
 
         if not sample_dict:
             raise Exception(f'No sequence file found in "{in_folder}".')

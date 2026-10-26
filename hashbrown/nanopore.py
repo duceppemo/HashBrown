@@ -83,8 +83,9 @@ class NanoporeMethods:
             # Filtlong writes to stdout
             print(f'\t{sample}')
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-            with gzip.open(filtered_fastq, 'wb') as f:
-                f.write(p.communicate()[0])
+            with gzip.open(filtered_fastq, 'wb') as f:  # streamed: the fastq can be many GB
+                shutil.copyfileobj(p.stdout, f, length=1024 * 1024)
+            p.wait()
 
         if os.path.exists(filtered_fastq):
             with gzip.open(filtered_fastq, 'rb') as f:

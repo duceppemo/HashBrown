@@ -41,10 +41,13 @@ if [ ! -s "$DATA/Linnocua/reference.fasta" ]; then
         local combined
         combined=$(find "$RAW/refs" -path "*$1*" -name 'reference.fasta' | head -1)
         if [ -n "$combined" ]; then cat "$combined"
-        else find "$RAW/refs" -path "*$1*" -name 'reference_*.fasta' | sort | xargs cat; fi
+        else find "$RAW/refs" -path "*$1*" -name 'reference_*.fasta' | sort | xargs -r cat; fi
     }
     pick_ref Listeria > "$DATA/Linnocua/reference.fasta"
     pick_ref Providencia > "$DATA/Prettgeri/reference.fasta"
+    for ref in "$DATA/Linnocua/reference.fasta" "$DATA/Prettgeri/reference.fasta"; do
+        [ -s "$ref" ] || { echo "ERROR: no reference extracted for $ref" >&2; exit 1; }
+    done
 fi
 
 # Stage: ONT filtered to >=1 kb best ~100x (genomes: 2.97 Mb and 4.47 Mb); Illumina subsampled
@@ -74,11 +77,11 @@ for s in Linnocua Prettgeri; do
         run=$OUT/bacterial__${sp}
         if [ ! -d "$run" ]; then
             cp -r "$OUT/base" "$run"
-            rm -rf "$run/done_polishing_long" "$run/done_trimming_short" "$run/done_polishing_short" \
+            rm -rf "$run/8_report" "$run/done_polishing_long" "$run/done_trimming_short" "$run/done_polishing_short" \
                    "$run/4_polished_long" "$run/5a_trimmed_short" "$run/5b_trimmed_short_report" \
                    "$run/6_polished_short" "$run/7_assembly_qc"
         fi
-        hashbrown -l "$OUT/reads_long" -s "$OUT/reads_short" -o "$run" --no-trim-long --no-filter-long --no-trim-short \
+        hashbrown -l "$OUT/reads_long" -s "$OUT/reads_short" -o "$run" --no-trim-long --no-filter-long --no-trim-short --skip-report \
             --long-polisher medaka --model r1041_e82_400bps_bacterial_methylation \
             --short-polisher "$sp" -t "$THREADS"
         asm="$run/6_polished_short/$s.fasta"

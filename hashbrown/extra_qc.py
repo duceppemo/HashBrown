@@ -104,8 +104,11 @@ class ExtraQcMethods:
         out_name = f'{sample}_busco'
         summaries = glob.glob(os.path.join(work, out_name, 'short_summary.*.txt'))
         if not summaries:
+            downloads = os.path.join(db_dir(), 'busco')
+            Methods.make_folder(downloads)
             _run(['busco', '-i', assembly, '-m', 'genome', '--auto-lineage-prok',
-                  '-o', out_name, '--out_path', work, '-c', str(cpu), '-f', '-q'])
+                  '-o', out_name, '--out_path', work, '--download_path', downloads,
+                  '-c', str(cpu), '-f', '-q'])
             summaries = glob.glob(os.path.join(work, out_name, 'short_summary.*.txt'))
         if not summaries:
             return {}, ['BUSCO failed: see its logs (it downloads lineages on first use; '
@@ -434,20 +437,24 @@ class ExtraQcMethods:
     # ------------------------------------------------------------------ MOB-suite
     @staticmethod
     def mob_suite(sample, assembly, work, cpu):
-        """Plasmid reconstruction and typing; returns (one row per plasmid, notes)."""
+        """Plasmid reconstruction and typing.
+
+        Returns (rows, notes): one row per plasmid; [] when MOB-suite ran and found none;
+        None when it did not run — the report renders a dedicated Plasmids section either way.
+        """
         if _missing('mob_recon'):
-            return [], ['Plasmid typing skipped: MOB-suite is not installed '
-                        '(conda install mob_suite, then hashbrown db mob).']
+            return None, ['Plasmid typing skipped: MOB-suite is not installed '
+                          '(conda install mob_suite, then hashbrown db mob).']
         out = os.path.join(work, 'mob_recon')
         results = os.path.join(out, 'mobtyper_results.txt')
         contig_report = os.path.join(out, 'contig_report.txt')
         if not os.path.exists(contig_report):
             _run(['mob_recon', '-i', assembly, '-o', out, '-n', str(cpu), '--force'])
         if not os.path.exists(contig_report):
-            return [], ['Plasmid typing failed: see MOB-suite logs '
-                        '(its database comes with hashbrown db mob).']
+            return None, ['Plasmid typing failed: see MOB-suite logs '
+                          '(its database comes with hashbrown db mob).']
         if not os.path.exists(results):
-            return [], ['MOB-suite: no plasmids detected.']
+            return [], []  # ran, nothing found: the report says so in the Plasmids section
         rows = []
         with open(results) as f:
             for row in csv.DictReader(f, delimiter='\t'):

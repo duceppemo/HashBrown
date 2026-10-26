@@ -10,11 +10,11 @@ output/
 ├── log.txt                        program versions
 ├── flye_stats.tsv                 per sample: read length, N50, assembly length, contigs, coverage
 │                                  (shasta_stats.tsv with -a shasta)
-├── 1_trimmed_long/                --trim-long: Porechop output, <sample>.fastq.gz
-├── 2_filtered_long/               --filter-long: Filtlong output
+├── 1_trimmed_long/                --trim-long (opt-in): Porechop output, <sample>.fastq.gz
+├── 2_filtered_long/               Filtlong output (default; absent with --no-filter-long)
 ├── 3_assembled_long/              <sample>.fasta — the raw assemblies
 ├── 4_polished_long/               <sample>.fasta — after Medaka
-├── 5a_trimmed_short/              --trim-short: fastp output pairs
+├── 5a_trimmed_short/              fastp output pairs (default; absent with --no-trim-short)
 ├── 5b_trimmed_short_report/       fastp HTML/JSON reports
 ├── 6_polished_short/              <sample>.fasta — the FINAL assemblies (contigs renamed contig_N),
 │                                  plus <sample>.polypolish.log, <sample>.report and <sample>.vcf (pyPOLCA)
@@ -58,7 +58,7 @@ The **final assembly** of each sample is the deepest one present: `6_polished_sh
 ```
 output/
 ├── log.txt
-├── 1_trimmed_short/               --trim-short: fastp output (report/ holds the HTML/JSON)
+├── 1_trimmed_short/               fastp output (default; absent with --no-trim-short)
 ├── 2_assembled_short/             <sample>.fasta — the final assemblies
 └── 3_assembly_qc/
     ├── quast/

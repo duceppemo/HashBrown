@@ -39,7 +39,7 @@ def test_phase3_modules_note_missing_tools(tmp_path, monkeypatch):
     assert results == {} and 'mlst' in notes[0]
 
     rows, notes = ExtraQcMethods.mob_suite('s', 'asm.fasta', str(tmp_path), 1)
-    assert rows == [] and 'MOB-suite' in notes[0]
+    assert rows is None and 'MOB-suite' in notes[0]  # None = did not run (vs [] = ran, none found)
 
     rows, notes = ExtraQcMethods.amr_virulence('s', 'asm.fasta', str(tmp_path), 1)
     assert rows == [] and len(notes) == 2  # AMRFinderPlus and abricate

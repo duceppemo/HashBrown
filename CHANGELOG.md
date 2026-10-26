@@ -1,6 +1,22 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 (2026-10-26)
+
+### Fixed (pre-release review)
+- Long-read-only runs no longer show a phantom "Polished - short reads" stage in the report when
+  dnaapler reoriented the assembly; the reoriented label follows the actual final stage.
+- Concurrent polishing of samples whose names prefix each other (S1/S12) no longer deletes each
+  other's SAM files (exact-name cleanup instead of a prefix glob).
+- SKESA now gets `--memory / parallel` like SPAdes, instead of each concurrent job claiming the full
+  budget; bwa and filtlong outputs are streamed to disk instead of buffered whole in memory.
+- BUSCO downloads its lineages under `~/.hashbrown/db/busco` instead of littering the working
+  directory; blank lines in a mosdepth summary no longer abort the report.
+- `_R1`/`_R2` detection no longer misreads names like `_R10`, and a sample with an ambiguous set of
+  short-read files (e.g. un-merged lanes) stops the run with a clear message instead of silently
+  continuing with one file.
+- The benchmark harness resumes no longer inherit the base run's QC-module results (reports are
+  skipped in harness runs; stale `8_report` state is removed on arm copies), and the non-model
+  benchmark fails loudly if no reference can be extracted instead of hanging on `xargs cat`.
 
 ### Changed
 - **Filtlong filtering and fastp trimming are now on by default** (skip with `--no-filter-long` /

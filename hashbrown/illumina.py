@@ -1,6 +1,5 @@
 """Short-read steps: trimming (fastp), assembly (SKESA or SPAdes) and polishing (Polypolish, pyPOLCA)."""
 
-import glob
 import io
 import os
 import shutil
@@ -156,7 +155,7 @@ class IlluminaMethods:
         with futures.ThreadPoolExecutor(max_workers=int(parallel)) as executor:
             if assembler == 'skesa':
                 args = ((sample, sample_obj, output_folder, gfa_folder,
-                         max(1, int(cpu / parallel)), mem, flag)
+                         max(1, int(cpu / parallel)), max(1, int(mem / parallel)), flag)
                         for sample, sample_obj in sample_dict.items())
                 runner = IlluminaMethods.assemble_skesa
             else:  # spades
@@ -212,10 +211,9 @@ class IlluminaMethods:
         subprocess.run(cmd_bwa_index, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
         for sam, fastq in zip(sams, reads, strict=True):
-            p = subprocess.Popen(['bwa', 'mem', '-t', str(cpu), '-a', genome, fastq],
-                                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-            with open(sam, 'wb') as f:
-                f.write(p.communicate()[0])
+            with open(sam, 'wb') as f:  # streamed: an -a SAM can be multi-GB
+                subprocess.run(['bwa', 'mem', '-t', str(cpu), '-a', genome, fastq],
+                               stdout=f, stderr=subprocess.DEVNULL)
 
         cmd_pp = ['polypolish', 'polish', genome] + sams
         p = subprocess.Popen(cmd_pp, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -231,10 +229,10 @@ class IlluminaMethods:
         fixed_fasta = os.path.join(polished_folder, sample + '.fasta')
         IlluminaMethods.fix_fasta(fasta_pp, fixed_fasta)
 
-        # Cleanup, including the index files bwa wrote next to the input genome
-        for ext in ('.amb', '.ann', '.bwt', '.pac', '.sa', '.sam'):
-            for leftover in glob.glob(os.path.join(polished_folder, sample + '*' + ext)) \
-                    + glob.glob(genome + ext):
+        # Cleanup: exact names only - a prefix glob would delete a concurrently polishing
+        # sample's SAMs whenever one sample name is a prefix of another (S1 vs S12)
+        for leftover in sams + [genome + ext for ext in ('.amb', '.ann', '.bwt', '.pac', '.sa')]:
+            if os.path.exists(leftover):
                 os.remove(leftover)
         os.remove(fasta_pp)
 

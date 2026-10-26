@@ -60,11 +60,11 @@ for sp in none polypolish+pypolca; do
     run=$OUT/bacterial__${sp}
     if [ ! -d "$run" ]; then
         cp -r "$OUT/base" "$run"
-        rm -rf "$run/done_polishing_long" "$run/done_trimming_short" "$run/done_polishing_short" \
+        rm -rf "$run/8_report" "$run/done_polishing_long" "$run/done_trimming_short" "$run/done_polishing_short" \
                "$run/4_polished_long" "$run/5a_trimmed_short" "$run/5b_trimmed_short_report" \
                "$run/6_polished_short" "$run/7_assembly_qc"
     fi
-    hashbrown -l "$OUT/reads_long" -s "$OUT/reads_short" -o "$run" --no-trim-long --no-filter-long --no-trim-short \
+    hashbrown -l "$OUT/reads_long" -s "$OUT/reads_short" -o "$run" --no-trim-long --no-filter-long --no-trim-short --skip-report \
         --long-polisher medaka --model r1041_e82_400bps_bacterial_methylation \
         --short-polisher "$sp" -t "$THREADS"
     asm="$run/6_polished_short/MG1655.fasta"

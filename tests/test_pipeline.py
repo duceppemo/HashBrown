@@ -73,7 +73,8 @@ def test_hybrid_pipeline(stub_bin, fastq_gz, tmp_path):
     # Phase 3: typing, genes, annotation
     assert 'ecoli' in page and 'ST' in page  # MLST, also in the index
     assert 'ecoli ST10' in (report / 'index.html').read_text()
-    assert 'plasmid_AA474' in page and 'IncFIB' in page  # MOB-suite
+    assert 'Plasmids (MOB-suite)' in page  # a dedicated section, whatever the outcome
+    assert 'plasmid_AA474' in page and 'IncFIB' in page
     assert 'blaEC' in page and 'gene_vfdb' in page and 'gene_plasmidfinder' in page
     assert 'Bakta: 4300 CDSs, 86 tRNAs, 22 rRNAs' in page
     genes = (report / 'tables' / 'sample1_amr_virulence.tsv').read_text()
@@ -225,3 +226,16 @@ def test_skip_report(stub_bin, fastq_gz, tmp_path):
     fastq_gz(long_dir / 'sample1.fastq.gz')
     run(['-l', str(long_dir), '-o', str(out), '--skip-report', '-p', '1'])
     assert not (out / '8_report').exists()
+
+
+def test_long_only_reorient_labels_no_phantom_stage(stub_bin, fastq_gz, tmp_path):
+    """The dnaapler sidecar swap must relabel the stage that IS the final assembly, not invent a
+    short-read polish row in a long-read-only run."""
+    long_dir, out = tmp_path / 'long', tmp_path / 'out'
+    fastq_gz(long_dir / 'sample1.fastq.gz')
+
+    run(['-l', str(long_dir), '-o', str(out), '-p', '1'])
+
+    page = (out / '8_report' / 'sample1.html').read_text()
+    assert 'Reoriented (dnaapler)' in page
+    assert 'Polished - short reads' not in page  # no short reads were given

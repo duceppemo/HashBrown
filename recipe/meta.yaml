@@ -2,7 +2,7 @@
 # that of the GitHub tarball for tag v{{ version }} (curl -sL <url> | sha256sum). For a new release: bump
 # `version`, recompute the sha256, and reset `number` to 0.
 {% set name = "hashbrown" %}
-{% set version = "1.0.0" %}
+{% set version = "1.1.0" %}
 
 package:
   name: {{ name }}

@@ -7,6 +7,7 @@ gracefully: a missing optional tool (pycoQC-ng, WeasyPrint) is reported as skipp
 import csv
 import gzip
 import io
+import math
 import os
 import re
 import shutil
@@ -259,13 +260,24 @@ class ReportMethods:
             ax.set_yscale('log')
         if len(blob_rows) <= 15:
             for r in blob_rows:
+                # Offset each label past its own dot's radius (marker area s is in points^2)
+                radius = math.sqrt((40 + 360 * r['length'] / max_length) / math.pi)
                 ax.annotate(r['contig'][:15], (r['gc'], max(r['cov'], 0.1)),
-                            fontsize=7, color=FIG_INK, xytext=(5, 5), textcoords='offset points')
+                            fontsize=7, color=FIG_INK, va='center',
+                            xytext=(radius + 3, 0), textcoords='offset points')
         ax.set_xlabel('%GC')
         ax.set_ylabel('Mean coverage (x)')
         ReportMethods._thousands((ax, 'y'))
         if any(o for o in organisms):
-            ReportMethods._style_legend(ax, loc='best')
+            # Proxy handles: fixed small swatches ABOVE the axes, so the legend can never be
+            # mistaken for a data point (scatter legends otherwise inherit the dot sizes)
+            from matplotlib.lines import Line2D
+            handles = [Line2D([], [], marker='o', linestyle='none', markersize=7,
+                              color=FIG_SERIES[i] if i < len(FIG_SERIES) else FIG_NEUTRAL,
+                              label=(organism[:40] or 'unassigned'))
+                       for i, organism in enumerate(organisms)]
+            ReportMethods._style_legend(ax, handles=handles, loc='lower left',
+                                        bbox_to_anchor=(0, 1.01), ncols=min(3, len(handles)))
         ReportMethods._style_axes(ax, grid_axis='both')
         fig.tight_layout()
         return ReportMethods._inline_svg(fig)
@@ -278,7 +290,7 @@ class ReportMethods:
             return contigs, total
         with open(summary_file) as f:
             for fields in csv.reader(f, delimiter='\t'):
-                if fields[0] == 'chrom' or fields[0].endswith('_region'):
+                if not fields or fields[0] == 'chrom' or fields[0].endswith('_region'):
                     continue
                 row = {'contig': fields[0], 'length': int(fields[1]), 'mean': float(fields[3])}
                 if fields[0] == 'total':
@@ -509,12 +521,15 @@ class ReportMethods:
             from hashbrown.assembly_qc import AssemblyQcMethods
             genome_size = AssemblyQcMethods.fasta_length(final_assembly)
 
-        # A dnaapler sidecar means the last stage file was reoriented in place: show both
+        # A dnaapler sidecar means the final assembly was reoriented in place: show both. The swap
+        # targets the stage whose file IS the final assembly - not the last listed stage, which may
+        # be a short-read polish that never ran (e.g. a long-read-only run)
         if final_assembly:
             unoriented = final_assembly.replace('.fasta', '_unoriented.fasta')
-            if os.path.exists(unoriented) and stage_fastas:
-                stage_fastas = (stage_fastas[:-1] + [(stage_fastas[-1][0], unoriented),
-                                                     ('Reoriented (dnaapler)', final_assembly)])
+            if os.path.exists(unoriented):
+                stage_fastas = [(name, unoriented if fasta == final_assembly else fasta)
+                                for name, fasta in stage_fastas]
+                stage_fastas.append(('Reoriented (dnaapler)', final_assembly))
 
         mapping_folders = {'Long reads': os.path.dirname(mosdepth_long),
                            'Short reads': os.path.dirname(mosdepth_short)}
@@ -964,10 +979,14 @@ Q50 &asymp; 1 error/100 kb; higher is better).</p>
 </tbody>
 </table>
 {% endif %}
+{% endif %}
+
+{% if plasmids is not none %}
+<h2 id="plasmids">Plasmids (MOB-suite)<a class="anchor" href="#plasmids">#</a></h2>
 {% if plasmids %}
 <table>
 <thead>
-<tr><th>Plasmid (MOB-suite)</th><th>Size (bp)</th><th>Replicon</th><th>Relaxase</th><th>Mobility</th></tr>
+<tr><th>Plasmid</th><th>Size (bp)</th><th>Replicon</th><th>Relaxase</th><th>Mobility</th></tr>
 </thead>
 <tbody>
 {% for p in plasmids %}
@@ -976,6 +995,8 @@ Q50 &asymp; 1 error/100 kb; higher is better).</p>
 {% endfor %}
 </tbody>
 </table>
+{% else %}
+<p>No plasmids detected.</p>
 {% endif %}
 {% endif %}
 
