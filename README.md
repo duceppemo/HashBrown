@@ -60,9 +60,12 @@ in [`docs/wiki`](docs/wiki):
 - [Installation](https://github.com/duceppemo/HashBrown/wiki/Installation) — conda, pip, troubleshooting
 - [Usage](https://github.com/duceppemo/HashBrown/wiki/Usage) — inputs, options, resuming, performance
 - [Methods](https://github.com/duceppemo/HashBrown/wiki/Methods) — what each step runs and why
-- [Outputs](https://github.com/duceppemo/HashBrown/wiki/Outputs) — folders and files, with an example
-  report ([HTML](https://htmlpreview.github.io/?https://github.com/duceppemo/HashBrown/blob/main/docs/example_report/MG1655.html) ·
-  [PDF](docs/example_report/MG1655.pdf)) from a real E. coli K-12 hybrid run
+- [Outputs](https://github.com/duceppemo/HashBrown/wiki/Outputs) — folders and files, with example
+  reports from a real E. coli K-12 hybrid run
+  ([HTML](https://htmlpreview.github.io/?https://github.com/duceppemo/HashBrown/blob/main/docs/example_report/MG1655.html) ·
+  [PDF](docs/example_report/MG1655.pdf)) and from a deliberately contaminated sample
+  ([HTML](https://htmlpreview.github.io/?https://github.com/duceppemo/HashBrown/blob/main/docs/example_report/contamdemo.html) ·
+  [PDF](docs/example_report/contamdemo.pdf))
 - [Validation](https://github.com/duceppemo/HashBrown/wiki/Validation) — benchmarking the polisher
   combinations against a gold standard
 - [FAQ](https://github.com/duceppemo/HashBrown/wiki/FAQ) — troubleshooting

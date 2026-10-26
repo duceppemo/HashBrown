@@ -29,7 +29,12 @@ output/
     ├── mummer_long/               <sample>_medaka.ps dot plot: raw vs Medaka
     ├── mummer_short/              <sample>_polypolish.ps dot plot: Medaka vs short-read polished
     └── assembly_graphs/           <sample>.gfa + <sample>.png (Bandage)
-└── 8_report/                     ← example: [HTML](https://htmlpreview.github.io/?https://github.com/duceppemo/HashBrown/blob/main/docs/example_report/MG1655.html) · [PDF](https://github.com/duceppemo/HashBrown/blob/main/docs/example_report/MG1655.pdf) (real E. coli K-12 run)
+└── 8_report/                     ← examples: a clean run
+    │                              ([HTML](https://htmlpreview.github.io/?https://github.com/duceppemo/HashBrown/blob/main/docs/example_report/MG1655.html) ·
+    │                              [PDF](https://github.com/duceppemo/HashBrown/blob/main/docs/example_report/MG1655.pdf))
+    │                              and a contaminated one
+    │                              ([HTML](https://htmlpreview.github.io/?https://github.com/duceppemo/HashBrown/blob/main/docs/example_report/contamdemo.html) ·
+    │                              [PDF](https://github.com/duceppemo/HashBrown/blob/main/docs/example_report/contamdemo.pdf))
     ├── index.html                 run overview: one row per sample
     ├── <sample>.html              the sample's report: read funnel (raw → trimmed → filtered),
     │                              assembly stage by stage (with Merqury QV), species confirmation,
@@ -71,3 +76,24 @@ output/
   investigating.
 - Coverage is mosdepth's overall mean depth (duplicates removed before counting); `NA` means the
   mapping produced no bam (no assembly or no reads).
+
+## What contamination looks like
+
+`docs/example_report/contamdemo` is a deliberately contaminated sample — real *E. coli* K-12 reads
+spiked with ~20% *Listeria innocua* reads (both read types), assembled with the defaults. Side by side
+with the clean MG1655 report:
+
+| Signal | Clean MG1655 | Contaminated |
+| --- | --- | --- |
+| MIMAG verdict | High-quality draft | **Low-quality draft** |
+| ConFindr | Clean | **Contaminated** ("Escherichia:Listeria") |
+| CheckM2 contamination | 0.14% | **66.65%** |
+| BUSCO | 99.5% single-copy | **93.1% duplicated** |
+| Assembly vs GenomeScope size | 4.64 Mb ≈ 4.66 Mb | **7.61 Mb vs 4.9 Mb** |
+| rRNA / tRNA counts | 8/7/7 · 89 | **14/13/13 · 155** (doubled) |
+| Merqury QV | ~50 | **~39** |
+| Blob plot | one cluster | **two clusters** (E. coli 51%GC/100x, Listeria 37%GC/30x) |
+
+Note what does **not** catch it: the mash species ID still reports *E. coli* at 100% ANI, because the
+majority genome dominates — a species check alone is not a contamination check. Several independent
+signals firing together is the pattern to trust.
