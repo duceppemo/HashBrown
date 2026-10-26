@@ -13,7 +13,7 @@ defaults follow measurements, not habit:
 
 ## Benchmark results (2026-10, HashBrown 1.0.0)
 
-Five tracks, every assembly scored by QUAST against a finished genome (mismatches and indels per 100 kbp,
+Six tracks, every assembly scored by QUAST against a finished genome (mismatches and indels per 100 kbp,
 lower is better). Full tables and runs: `benchmark_results.tsv` under each run folder. Every track is
 scripted and documented in
 [`validation/benchmarks/`](https://github.com/duceppemo/HashBrown/tree/main/validation/benchmarks) —
@@ -42,6 +42,28 @@ is a constant offset, so only the differences between arms count):
 Medaka never hurt, and **ONT's bacterial methylation model removed 3x more indels than the matched sup
 model** (~34 vs ~7 genome-wide). It is HashBrown's default model since this benchmark.
 
+**Non-model organisms** — *Listeria innocua* AUSMDU00097349 (Bacillota) and *Providencia rettgeri*
+AUSMDU00026122 (Morganellaceae), real R10.4.1 sup v5.0.0 at 100x + Illumina, truth = the same isolates'
+Trycycler references from the [Autocycler paper](https://doi.org/10.1093/bioinformatics/btaf474)
+(Wick *et al.* 2025). This track exists to test whether Medaka's bacterial methylation model only helps
+model organisms it may have been trained on — it does not:
+
+| Sample | Arm | Mismatches/100kbp | Indels/100kbp |
+| --- | --- | --- | --- |
+| *L. innocua* | none + none | 0.00 | 0.03 |
+| *L. innocua* | any polisher combination | **0.00** | **0.00** |
+| *P. rettgeri* | none + none | 0.04 | 0.11 |
+| *P. rettgeri* | medaka (matched sup) + none | 0.04 | 0.02 |
+| *P. rettgeri* | medaka (bacterial) + none | **0.02** | **0.02** |
+| *P. rettgeri* | anything + polypolish+pypolca | **0.00** | **0.00** |
+
+With modern sup v5 basecalls at 100x the raw Flye assemblies start within a handful of errors of perfect;
+every polisher helps or is neutral, the bacterial model is equal (*L. innocua*) or better
+(*P. rettgeri*) than the matched sup model on organisms far from *E. coli*, and the defaults end both
+genomes **error-free against the truth**. Caveat: the references were themselves polished with
+Medaka + Polypolish + pyPOLCA, so a blind spot shared by those tools cannot be excluded.
+The track is fully scripted: `validation/benchmarks/autocycler_nonmodel_benchmark.sh`.
+
 **Real AF2122/97 PacBio RS CLR + NextSeq** (truth = its own finished genome; the CLR base assembly is
 deliberately rough — a stress test):
 
@@ -67,7 +89,8 @@ moves it toward that culture.
 - **Hybrid Nanopore + Illumina**: keep `--long-polisher medaka --short-polisher polypolish+pypolca`
   (the default). Gains are small on good data, large on rough assemblies, and never negative on Nanopore.
 - **Medaka model**: `r1041_e82_400bps_bacterial_methylation` (the default) for bacterial isolates on
-  R10.4.1; it beat or equalled the matched sup model everywhere.
+  R10.4.1; it beat or equalled the matched sup model everywhere — including on the non-model organisms
+  (*M. bovis*, *L. innocua*, *P. rettgeri*), so the gain is not model-organism overfitting.
 - **Recent sup basecalls at ≥100x**: `--long-polisher none` is acceptable — the assembler is already at
   the error floor — but medaka costs little and still helps older basecalls (sup v4.3: −34 indels).
 - **Non-Nanopore long reads** (PacBio): always `--long-polisher none`.
