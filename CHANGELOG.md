@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### Changed
+- **Single-end short reads can polish long-read assemblies**: Polypolish (one all-alignments SAM) and
+  pyPOLCA (no `--reads2`) both run single-end, so Ion Torrent or unpaired Illumina data works in hybrid
+  mode; a sample with a pair plus stray extra files keeps the pair with a warning. New `--skip-report`
+  flag for harness runs where only the assemblies matter.
 - **`--ion-torrent` now shapes the whole run, not just SPAdes**: fastp skips adapter trimming for Ion
   Torrent reads (the Torrent Suite already removed the adapters; the sliding-window quality trim stays),
   the flag is accepted in hybrid mode, and polishing a Nanopore assembly with Ion Torrent reads prints a

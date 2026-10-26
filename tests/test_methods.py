@@ -79,7 +79,7 @@ def test_get_illumina_files_hybrid(tmp_path, capsys):
     (short_folder / 'sample1_R1.fastq.gz').write_bytes(b'')
     (short_folder / 'sample1_R2.fastq.gz').write_bytes(b'')
     (short_folder / 'orphan_R1.fastq.gz').write_bytes(b'')  # no matching long reads
-    (short_folder / 'sample1.fastq.gz').write_bytes(b'')  # neither _R1 nor _R2
+    (short_folder / 'sample1.fastq.gz').write_bytes(b'')  # a stray third file: the pair wins
 
     sample_dict = Methods.get_nanopore_files(str(long_folder))
     sample_dict = Methods.get_illumina_files(str(short_folder), sample_dict)
@@ -89,7 +89,22 @@ def test_get_illumina_files_hybrid(tmp_path, capsys):
     assert '_R1' in r1 and '_R2' in r2
     err = capsys.readouterr().err
     assert 'No matching long reads' in err
-    assert 'Cannot tell R1 from R2' in err
+    assert 'Too many short-read files' in err
+
+
+def test_get_illumina_files_hybrid_single_end(tmp_path):
+    """A single-end short-read file (e.g. Ion Torrent) is attached to its long-read sample."""
+    long_folder = tmp_path / 'long'
+    long_folder.mkdir()
+    (long_folder / 'sample1.fastq.gz').write_bytes(b'')
+    short_folder = tmp_path / 'short'
+    short_folder.mkdir()
+    (short_folder / 'sample1.fastq.gz').write_bytes(b'')
+
+    sample_dict = Methods.get_nanopore_files(str(long_folder))
+    sample_dict = Methods.get_illumina_files(str(short_folder), sample_dict)
+
+    assert len(sample_dict['sample1'].illumina.raw) == 1
 
 
 def test_get_illumina_files_standalone(tmp_path):

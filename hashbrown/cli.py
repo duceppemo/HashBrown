@@ -89,6 +89,10 @@ def parse_arguments(argv=None):
                              'mode. Polishing a Nanopore assembly with Ion Torrent reads is NOT '
                              'recommended: both share homopolymer/indel errors, so the polish can '
                              'confirm rather than fix them (consider --short-polisher none).')
+    parser.add_argument('--skip-report',
+                        action='store_true',
+                        help='Do not build the HTML/PDF report (for benchmark harnesses and other '
+                             'runs where only the assemblies matter).')
     parser.add_argument('--annotate',
                         choices=['auto', 'bakta', 'pgap', 'none'], default='auto',
                         help='Genome annotation in the report. "auto" (default) runs Bakta when it and '
@@ -152,6 +156,7 @@ class HashBrown:
         self.short_polishers = SHORT_POLISHERS[args.short_polisher]
         self.ion_torrent = args.ion_torrent
         self.annotate = args.annotate
+        self.skip_report = args.skip_report
 
         # Performance
         self.cpu = args.threads
@@ -317,9 +322,12 @@ class HashBrown:
                                                   self.cpu, self.parallel)
 
         # Report
-        print('Building the report...')
-        ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '8_report'), 'long',
-                                    self.cpu, self.annotate)
+        if self.skip_report:
+            print('Skipping the report (--skip-report).')
+        else:
+            print('Building the report...')
+            ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '8_report'), 'long',
+                                        self.cpu, self.annotate)
 
     def run_short(self):
         """Short read assembly with SKESA or SPAdes (single-end or paired-end)."""
@@ -369,9 +377,12 @@ class HashBrown:
                                               self.cpu, self.parallel)
 
         # Report
-        print('Building the report...')
-        ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '4_report'), 'short',
-                                    self.cpu, self.annotate)
+        if self.skip_report:
+            print('Skipping the report (--skip-report).')
+        else:
+            print('Building the report...')
+            ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '4_report'), 'short',
+                                        self.cpu, self.annotate)
 
 
 MASH_SKETCH_URL = 'https://gembox.cbcb.umd.edu/mash/refseq.genomes.k21s1000.msh'

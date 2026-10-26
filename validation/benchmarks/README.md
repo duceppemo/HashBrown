@@ -14,6 +14,7 @@ the HashBrown environment.
 | MG1655 | `mg1655_benchmark.sh` | *E. coli* K-12 (DSM 18039) | real ONT R10.4.1 (ERR17025883) + Illumina (SRR41214148) + HiFi (SRR10971019) | U00096.3 (lab-stock caveat) | yes |
 | MBWGS426 | `mbwgs426_medaka_models.sh` | *M. bovis* field strain | real ONT R10.4.1 sup v4.3.0 (in-house) | AF2122/97 (comparative deltas only) | reads in-house |
 | Non-model | `autocycler_nonmodel_benchmark.sh` | *L. innocua*, *P. rettgeri* | real ONT R10.4.1 sup v5.0.0 + Illumina | same-isolate Trycycler references (Wick *et al.* 2025, Autocycler paper) | yes |
+| Ion Torrent | `iontorrent_polish_benchmark.sh` | *S. goeteborgense* CCUG 66741ᵀ, *Vibrio* sp. ED-400 | real ONT + Ion PGM (SE) + Illumina, one DNA source each | same-isolate ONT+Illumina assembly | yes |
 
 ## Gold standards and their caveats
 
@@ -35,6 +36,14 @@ the HashBrown environment.
   - *L. innocua* AUSMDU00097349 — BioSample SAMN46906078, ONT SRR32486273, Illumina SRR32484996
   - *P. rettgeri* AUSMDU00026122 — BioSample SAMN46905808, ONT SRR32486258, Illumina SRR32458788
   - References: figshare article 28910099 ("Autocycler: assemblies and reference genomes")
+
+- **Ion Torrent** — does Ion Torrent polishing of a Nanopore assembly fail on exactly the homopolymer
+  indels Illumina fixes (shared flow-chemistry error mode)? Three platforms per isolate from one DNA
+  submission; the Illumina polish arm is depth-matched to the Ion arm, and every remaining indel is
+  classified by homopolymer context. Caveat: the truth is Illumina-polished, so the Ion-vs-none delta
+  and the homopolymer classification are the meaningful readouts, not Illumina-vs-truth. Accessions:
+  - *S. goeteborgense* CCUG 66741 — SAMN05150228: ONT SRR11858646, Ion SRR8561413, NovaSeq SRR11858647
+  - *Vibrio* sp. ED-400 — SAMN20877004: ONT SRR16167661, Ion SRR16167662, MiSeq SRR16167664
 
 ## Reproducing
 

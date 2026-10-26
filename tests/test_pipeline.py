@@ -194,3 +194,23 @@ def test_hybrid_ion_torrent_warns_about_polishing(stub_bin, fastq_gz, tmp_path, 
     output = capsys.readouterr().out
     assert 'polishing Nanopore assemblies with Ion Torrent reads is not recommended' in output
     assert (out / '6_polished_short' / 'sample1.fasta').is_file()  # warned, not blocked
+
+
+def test_hybrid_single_end_short_reads_polish(stub_bin, fastq_gz, tmp_path):
+    """Single-end short reads (e.g. Ion Torrent) can polish a long-read assembly."""
+    long_dir, short_dir, out = tmp_path / 'long', tmp_path / 'short', tmp_path / 'out'
+    fastq_gz(long_dir / 'sample1.fastq.gz')
+    fastq_gz(short_dir / 'sample1.fastq.gz')  # no _R1/_R2: single-end
+
+    run(['-l', str(long_dir), '-s', str(short_dir), '-o', str(out), '-p', '1'])
+
+    final = out / '6_polished_short' / 'sample1.fasta'
+    assert final.is_file() and final.read_text().startswith('>contig_1')
+    assert (out / '6_polished_short' / 'sample1.report').is_file()  # pypolca ran single-end
+
+
+def test_skip_report(stub_bin, fastq_gz, tmp_path):
+    long_dir, out = tmp_path / 'long', tmp_path / 'out'
+    fastq_gz(long_dir / 'sample1.fastq.gz')
+    run(['-l', str(long_dir), '-o', str(out), '--skip-report', '-p', '1'])
+    assert not (out / '8_report').exists()

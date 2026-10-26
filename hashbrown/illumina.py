@@ -203,22 +203,21 @@ class IlluminaMethods:
         os.remove(tmp_file)
 
     @staticmethod
-    def run_polypolish(genome, r1, r2, polished_folder, sample, cpu):
-        # I/O
-        sam_r1 = os.path.join(polished_folder, sample + '_R1.sam')
-        sam_r2 = os.path.join(polished_folder, sample + '_R2.sam')
+    def run_polypolish(genome, reads, polished_folder, sample, cpu):
+        """reads is [R1, R2] or a single-end [reads]: each file is mapped separately (-a), as
+        Polypolish wants."""
+        sams = [os.path.join(polished_folder, f'{sample}_{i + 1}.sam') for i in range(len(reads))]
 
-        # Index the genome, then map each mate separately keeping all alignments (-a), as Polypolish wants
         cmd_bwa_index = ['bwa', 'index', genome]
         subprocess.run(cmd_bwa_index, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
-        for sam, reads in ((sam_r1, r1), (sam_r2, r2)):
-            p = subprocess.Popen(['bwa', 'mem', '-t', str(cpu), '-a', genome, reads],
+        for sam, fastq in zip(sams, reads, strict=True):
+            p = subprocess.Popen(['bwa', 'mem', '-t', str(cpu), '-a', genome, fastq],
                                  stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
             with open(sam, 'wb') as f:
                 f.write(p.communicate()[0])
 
-        cmd_pp = ['polypolish', 'polish', genome, sam_r1, sam_r2]
+        cmd_pp = ['polypolish', 'polish', genome] + sams
         p = subprocess.Popen(cmd_pp, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
 
@@ -242,7 +241,7 @@ class IlluminaMethods:
         return fixed_fasta
 
     @staticmethod
-    def run_pypolca(genome, r1, r2, polished_folder, sample, cpu):
+    def run_pypolca(genome, reads, polished_folder, sample, cpu):
         # https://github.com/gbouras13/pypolca
         # The polished fasta is <prefix>_corrected.fasta in the output folder; the report is <prefix>.report
         tmp_folder = os.path.join(polished_folder, sample)
@@ -251,13 +250,14 @@ class IlluminaMethods:
 
         cmd = ['pypolca', 'run',
                '--assembly', genome,
-               '--reads1', r1,
-               '--reads2', r2,
+               '--reads1', reads[0],
                '--output', tmp_folder,
                '--prefix', sample,
                '--careful',
                '--force',
                '--threads', str(cpu)]
+        if len(reads) == 2:
+            cmd[6:6] = ['--reads2', reads[1]]
 
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, _ = p.communicate()
@@ -296,8 +296,8 @@ class IlluminaMethods:
         if not os.path.exists(flag):
             if not genome or not os.path.exists(genome):
                 print(f'\tNo assembly for {sample}. Skipping short read polishing.')
-            elif len(reads) != 2:
-                print(f'\tPaired-end data missing for {sample}. Skipping short read polishing.')
+            elif not reads:
+                print(f'\tNo short reads for {sample}. Skipping short read polishing.')
             else:
                 print(f'\t{sample}')
                 Methods.make_folder(output_folder)
@@ -305,7 +305,7 @@ class IlluminaMethods:
                 runners = {'polypolish': IlluminaMethods.run_polypolish,
                            'pypolca': IlluminaMethods.run_pypolca}
                 for polisher in polishers:
-                    genome = runners[polisher](genome, reads[0], reads[1], output_folder, sample, cpu)
+                    genome = runners[polisher](genome, reads, output_folder, sample, cpu)
 
                 if os.path.exists(polished_assembly):
                     IlluminaMethods.fix_fasta_header(polished_assembly)

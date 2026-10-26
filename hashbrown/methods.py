@@ -195,10 +195,10 @@ class Methods:
         """Attach the short-read files to the samples.
 
         "_R1"/"_R2" in the file name mark the two files of a pair; a file without either is a
-        single-end sample. With require_long_reads (the hybrid pipeline, where the short reads
-        only polish), a short-read sample without matching long reads is reported and skipped,
-        and single-end files are skipped too (the polishers need pairs). Without it (the
-        short-read-only pipeline), every sample found is assembled.
+        single-end sample (both polishers handle single-end reads). With require_long_reads (the
+        hybrid pipeline, where the short reads only polish), a short-read sample without matching
+        long reads is reported and skipped. Without it (the short-read-only pipeline), every
+        sample found is assembled.
         """
         for root, _, filenames in os.walk(in_folder):
             for filename in sorted(filenames):
@@ -216,13 +216,21 @@ class Methods:
 
                 if '_R1' in filename:
                     sample_dict[sample].illumina.raw.insert(0, file_path)
-                elif '_R2' in filename:
+                else:  # _R2 of a pair, or a single-end sample
                     sample_dict[sample].illumina.raw.append(file_path)
-                elif require_long_reads:
-                    sys.stderr.write(f'Cannot tell R1 from R2 for {filename} '
-                                     '(no "_R1" or "_R2" in the name): skipping it.\n')
-                else:  # single-end sample
-                    sample_dict[sample].illumina.raw.append(file_path)
+
+        # A sample is a pair or one single-end file; with more files than that, keep the pair
+        for sample, sample_obj in sample_dict.items():
+            reads = sample_obj.illumina.raw
+            if len(reads) > 2:
+                pair = [f for f in reads if '_R1' in os.path.basename(f)] + \
+                       [f for f in reads if '_R2' in os.path.basename(f)]
+                kept = pair[:2] if len(pair) == 2 else reads[:1]
+                for extra in reads:
+                    if extra not in kept:
+                        sys.stderr.write(f'Too many short-read files for {sample}: '
+                                         f'ignoring {os.path.basename(extra)}.\n')
+                sample_obj.illumina.raw = kept
 
         if not sample_dict:
             raise Exception(f'No sequence file found in "{in_folder}".')
