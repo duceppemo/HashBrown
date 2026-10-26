@@ -9,6 +9,7 @@ from psutil import virtual_memory
 
 from hashbrown import __version__
 from hashbrown.assembly_qc import AssemblyQcMethods
+from hashbrown.extra_qc import ExtraQcMethods, db_dir
 from hashbrown.illumina import IlluminaMethods
 from hashbrown.methods import Methods
 from hashbrown.nanopore import NanoporeMethods
@@ -271,10 +272,20 @@ class HashBrown:
         mummer_long_folder = os.path.join(assembly_qc_folder, 'mummer_long')
         mummer_short_folder = os.path.join(assembly_qc_folder, 'mummer_short')
 
+        # The dot plots compare the polishing stages, so they run before reorientation: a rotation
+        # would otherwise show up as a broken diagonal
         if self.long_polisher == 'medaka':
             print('\tDot plots - raw vs long read polished (nucmer)')
             AssemblyQcMethods.run_nucmer_parallel(self.sample_dict, mummer_long_folder, 'medaka',
                                                   self.cpu, self.parallel)
+        if polishing:
+            print('\tDot plots - long read polished vs short read polished (nucmer)')
+            AssemblyQcMethods.run_nucmer_parallel(self.sample_dict, mummer_short_folder, 'polypolish',
+                                                  self.cpu, self.parallel)
+
+        print('\tReorienting the final assemblies (dnaapler)')
+        ExtraQcMethods.reorient_parallel(self.sample_dict, os.path.join(out, 'done_reorienting'),
+                                         self.cpu)
 
         print('\tQUAST')
         AssemblyQcMethods.run_quast(self.sample_dict, quast_folder, self.cpu)
@@ -284,10 +295,6 @@ class HashBrown:
                                               self.cpu, self.parallel)
 
         if polishing:
-            print('\tDot plots - long read polished vs short read polished (nucmer)')
-            AssemblyQcMethods.run_nucmer_parallel(self.sample_dict, mummer_short_folder, 'polypolish',
-                                                  self.cpu, self.parallel)
-
             print('\tMapping QC and coverage - short reads (flagstat, mosdepth)')
             AssemblyQcMethods.mapping_qc_parallel(self.sample_dict, mapping_qc_short_folder, 'illumina',
                                                   self.cpu, self.parallel)
@@ -331,6 +338,10 @@ class HashBrown:
         quast_folder = os.path.join(assembly_qc_folder, 'quast')
         mapping_qc_short_folder = os.path.join(assembly_qc_folder, 'mapping_qc_short_reads')
 
+        print('\tReorienting the final assemblies (dnaapler)')
+        ExtraQcMethods.reorient_parallel(self.sample_dict, os.path.join(out, 'done_reorienting'),
+                                         self.cpu)
+
         print('\tQUAST')
         AssemblyQcMethods.run_quast(self.sample_dict, quast_folder, self.cpu)
 
@@ -343,7 +354,43 @@ class HashBrown:
         ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '4_report'), 'short', self.cpu)
 
 
+MASH_SKETCH_URL = 'https://gembox.cbcb.umd.edu/mash/refseq.genomes.k21s1000.msh'
+
+
+def db_main(argv):
+    """`hashbrown db <module>`: fetch the database an optional QC module needs."""
+    parser = ArgumentParser(prog='hashbrown db',
+                            description='Download the database of an optional QC module. '
+                                        'BUSCO needs no step here: it fetches its lineages on first use.')
+    parser.add_argument('module', choices=['mash', 'checkm2'],
+                        help='mash: RefSeq genome sketches for the species ID (~800 MB). '
+                             'checkm2: the CheckM2 DIAMOND database (~3 GB).')
+    parser.add_argument('--dir', default=db_dir(),
+                        help='Database folder. Default: %(default)s (or $HASHBROWN_DB).')
+    args = parser.parse_args(argv)
+
+    target = os.path.join(args.dir, args.module)
+    Methods.make_folder(target)
+    if args.module == 'mash':
+        sketch = os.path.join(target, os.path.basename(MASH_SKETCH_URL))
+        if os.path.exists(sketch):
+            print(f'Already there: {sketch}')
+            return
+        print(f'Downloading {MASH_SKETCH_URL} ...')
+        from urllib.request import urlretrieve
+        urlretrieve(MASH_SKETCH_URL, sketch + '.part')
+        os.rename(sketch + '.part', sketch)
+        print(f'Done: {sketch}')
+    else:  # checkm2
+        import subprocess
+        done = subprocess.run(['checkm2', 'database', '--download', '--path', target])
+        sys.exit(done.returncode)
+
+
 def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] == ['db']:
+        return db_main(argv[1:])
     args = parse_arguments(argv)
 
     if args.list_models:

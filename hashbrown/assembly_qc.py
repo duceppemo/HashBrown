@@ -49,10 +49,17 @@ class AssemblyQcMethods:
         """Dot plots before/after polishing: stage 'medaka' (raw vs medaka) or 'polypolish' (medaka vs final)."""
         Methods.make_folder(output_folder)
 
+        def unoriented(path):
+            # On a resumed run the final assembly is already dnaapler-reoriented; compare the
+            # pre-reorientation sidecar instead, or the rotation would look like a structural change
+            sidecar = path.replace('.fasta', '_unoriented.fasta') if path else path
+            return sidecar if path and os.path.exists(sidecar) else path
+
         def pair(sample_obj):
             if stage == 'medaka':
-                return sample_obj.assembly.raw, sample_obj.assembly.medaka
-            return (sample_obj.assembly.medaka or sample_obj.assembly.raw), sample_obj.assembly.polypolish
+                return unoriented(sample_obj.assembly.raw), unoriented(sample_obj.assembly.medaka)
+            return (unoriented(sample_obj.assembly.medaka) or unoriented(sample_obj.assembly.raw),
+                    unoriented(sample_obj.assembly.polypolish))
 
         with futures.ThreadPoolExecutor(max_workers=int(parallel)) as executor:
             args = ((sample, *pair(sample_obj), output_folder, stage, max(1, int(cpu / parallel)))

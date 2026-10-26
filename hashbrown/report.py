@@ -99,7 +99,8 @@ class ReportMethods:
                          'contigs': int(r['num_seqs']),
                          'size': int(r['sum_len']),
                          'n50': int(r.get('N50', 0)),
-                         'gc': r.get('GC(%)', '-')})
+                         'gc': r.get('GC(%)', '-'),
+                         'qv': '-'})
         return rows
 
     @staticmethod
@@ -239,13 +240,15 @@ class ReportMethods:
         return html if os.path.exists(html) else ''
 
     @staticmethod
-    def write_tables(tables_folder, sample, funnels, assembly_rows, contigs_long, contigs_short):
+    def write_tables(tables_folder, sample, funnels, assembly_rows, contigs_long, contigs_short,
+                     identity=None, completeness=None, sanity=None):
         """Every report table as machine-readable TSV."""
         Methods.make_folder(tables_folder)
 
         def write(name, fieldnames, rows):
             with open(os.path.join(tables_folder, f'{sample}_{name}.tsv'), 'w', newline='') as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter='\t', extrasaction='ignore')
+                writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter='\t',
+                                        extrasaction='ignore', restval='-')
                 writer.writeheader()
                 writer.writerows(rows)
         for funnel in funnels:
@@ -253,7 +256,10 @@ class ReportMethods:
             write(f'read_funnel_{tag}', ['stage', 'reads', 'bases', 'n50', 'avg_qual', 'gc',
                                          'coverage', 'kept'], funnel['rows'])
         if assembly_rows:
-            write('assembly_funnel', ['stage', 'contigs', 'size', 'n50', 'gc'], assembly_rows)
+            write('assembly_funnel', ['stage', 'contigs', 'size', 'n50', 'gc', 'qv'], assembly_rows)
+        summary = {**(identity or {}), **(completeness or {}), **(sanity or {})}
+        if summary:
+            write('identity_completeness', list(summary), [summary])
         cov_rows = [{'contig': c['contig'], 'length': c['length'], 'read_type': t, 'mean_coverage': c['mean']}
                     for t, contigs in (('long', contigs_long), ('short', contigs_short)) for c in contigs]
         if cov_rows:
@@ -286,10 +292,38 @@ class ReportMethods:
             from hashbrown.assembly_qc import AssemblyQcMethods
             genome_size = AssemblyQcMethods.fasta_length(final_assembly)
 
+        # A dnaapler sidecar means the last stage file was reoriented in place: show both
+        if final_assembly:
+            unoriented = final_assembly.replace('.fasta', '_unoriented.fasta')
+            if os.path.exists(unoriented) and stage_fastas:
+                stage_fastas = (stage_fastas[:-1] + [(stage_fastas[-1][0], unoriented),
+                                                     ('Reoriented (dnaapler)', final_assembly)])
+
         funnels = ReportMethods.read_funnel(sample, sample_obj, genome_size, cpu)
         assembly_rows = ReportMethods.assembly_funnel(sample, stage_fastas, cpu)
         contigs_long, total_long = ReportMethods.parse_mosdepth_summary(mosdepth_long)
         contigs_short, total_short = ReportMethods.parse_mosdepth_summary(mosdepth_short)
+
+        # Optional QC modules (phase 2): each degrades to a note when its tool or database is missing
+        from hashbrown.extra_qc import ExtraQcMethods
+        qc_work = os.path.join(report_folder, 'qc', sample)
+        Methods.make_folder(qc_work)
+        identity, completeness, sanity = {}, {}, {}
+        if final_assembly and os.path.exists(final_assembly):
+            identity, id_notes = ExtraQcMethods.species_ani(sample, final_assembly, qc_work, cpu)
+            notes += id_notes
+            completeness, checkm_notes = ExtraQcMethods.checkm2(sample, final_assembly, qc_work, cpu)
+            notes += checkm_notes
+            busco_result, busco_notes = ExtraQcMethods.busco(sample, final_assembly, qc_work, cpu)
+            completeness.update(busco_result)
+            notes += busco_notes
+            sanity, sanity_notes = ExtraQcMethods.rrna_trna(sample, final_assembly, qc_work, cpu)
+            notes += sanity_notes
+            qv_map, qv_notes = ExtraQcMethods.merqury_qv(sample, sample_obj, stage_fastas,
+                                                         os.path.join(qc_work, 'merqury'), cpu)
+            notes += qv_notes
+            for row in assembly_rows:
+                row['qv'] = qv_map.get(row['stage'], '-')
 
         # Figures
         read_figs = []
@@ -324,7 +358,8 @@ class ReportMethods:
                          '(pip install pycoqc-ng).')
 
         ReportMethods.write_tables(os.path.join(report_folder, 'tables'), sample, funnels,
-                                   assembly_rows, contigs_long, contigs_short)
+                                   assembly_rows, contigs_long, contigs_short,
+                                   identity, completeness, sanity)
 
         # Per-contig coverage, long and short side by side
         short_map = {c['contig']: c['mean'] for c in contigs_short}
@@ -344,7 +379,8 @@ class ReportMethods:
                 sample=sample, version=__version__, date=date.today().isoformat(),
                 sampled=SAMPLED_READS, funnels=funnels, read_figs=read_figs,
                 assembly_rows=assembly_rows, cov_rows=cov_rows, cov_total=cov_total,
-                cov_fig=cov_fig, links=links + pycoqc_links, notes=notes))
+                cov_fig=cov_fig, identity=identity, completeness=completeness, sanity=sanity,
+                links=links + pycoqc_links, notes=notes))
         ReportMethods.render_pdf(html_file, notes)
 
         final = assembly_rows[-1] if assembly_rows else {}
@@ -440,11 +476,38 @@ REPORT_TEMPLATE = """<!doctype html>
 {% if assembly_rows %}
 <h2>Assembly - stage by stage</h2>
 <table>
-<tr><th>Stage</th><th>Contigs</th><th>Size (bp)</th><th>N50</th><th>%GC</th></tr>
+<tr><th>Stage</th><th>Contigs</th><th>Size (bp)</th><th>N50</th><th>%GC</th><th>QV</th></tr>
 {% for r in assembly_rows %}
 <tr><td>{{ r.stage }}</td><td>{{ '{:,}'.format(r.contigs) }}</td><td>{{ '{:,}'.format(r.size) }}</td>
-<td>{{ '{:,}'.format(r.n50) }}</td><td>{{ r.gc }}</td></tr>
+<td>{{ '{:,}'.format(r.n50) }}</td><td>{{ r.gc }}</td><td>{{ r.qv }}</td></tr>
 {% endfor %}
+</table>
+<p class="muted">QV: Merqury consensus quality from the short-read k-mers (Q30 &asymp; 1 error/kb,
+Q50 &asymp; 1 error/100 kb; higher is better).</p>
+{% endif %}
+
+{% if identity %}
+<h2>Species confirmation</h2>
+<table>
+<tr><th>Closest genome (mash)</th><th>Mash distance</th><th>Organism</th><th>ANI</th></tr>
+<tr><td>{{ identity.hit }}</td><td>{{ identity.distance }}</td>
+<td><em>{{ identity.organism }}</em></td><td>{{ identity.ani }}</td></tr>
+</table>
+<p class="muted">Same species: ANI &ge; 95% against the closest genome.</p>
+{% endif %}
+
+{% if completeness or sanity %}
+<h2>Completeness &amp; sanity</h2>
+<table>
+{% if completeness.completeness is defined %}
+<tr><td>CheckM2 completeness</td><td>{{ completeness.completeness }}%</td></tr>
+<tr><td>CheckM2 contamination</td><td>{{ completeness.contamination }}%</td></tr>
+{% endif %}
+{% if completeness.summary is defined %}
+<tr><td>BUSCO ({{ completeness.lineage }})</td><td>{{ completeness.summary }}</td></tr>
+{% endif %}
+{% if sanity.rrna is defined %}<tr><td>rRNA genes (barrnap)</td><td>{{ sanity.rrna }}</td></tr>{% endif %}
+{% if sanity.trna is defined %}<tr><td>tRNAs (tRNAscan-SE)</td><td>{{ sanity.trna }}</td></tr>{% endif %}
 </table>
 {% endif %}
 

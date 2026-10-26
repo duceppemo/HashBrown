@@ -3,6 +3,17 @@
 ## Unreleased
 
 ### Added
+- **Optional QC modules** (reporting phase 2), auto-detected at runtime and reported as skipped-with-a-hint
+  when not installed: **dnaapler** reorients every final assembly in place (chromosome to *dnaA*, plasmids
+  to *rep*; the input order is kept next to it as `<sample>_unoriented.fasta`, and dot plots keep comparing
+  pre-reorientation sequences); **Merqury** consensus QV per assembly stage from the short-read k-mers (new
+  QV column in the report's assembly table); **species confirmation** — mash against a local RefSeq sketch,
+  then ANI (fastANI or skani) against the top hit fetched with NCBI `datasets`; **CheckM2**
+  completeness/contamination; **BUSCO** (prokaryote auto-lineage); **barrnap** rRNA counts and
+  **tRNAscan-SE** tRNA counts as annotation sanity checks. Results land in the HTML/PDF report, the
+  `tables/` TSVs and `8_report/qc/<sample>/`.
+- **`hashbrown db {mash,checkm2}`** downloads the databases those modules need (default
+  `~/.hashbrown/db`, override with `--dir` or `$HASHBROWN_DB`).
 - **Per-sample HTML report** (`8_report/`, or `4_report/` for short-read-only runs) with a run-level
   `index.html`: read funnel tables showing the effect of every read-processing stage (raw → trimmed →
   filtered: reads, bases, N50, mean Q, %GC, coverage, % kept), assembly stage-by-stage table

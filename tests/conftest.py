@@ -158,6 +158,76 @@ STUBS = {
     mkdir -p "$out"
     printf 'Assembly\\tsample\\n' > "$out/report.tsv"
     ''',
+    'dnaapler': '''
+    out=""; prefix=""; prev=""
+    in=""
+    for a in "$@"; do
+      [ "$prev" = "-i" ] && in=$a; [ "$prev" = "-o" ] && out=$a; [ "$prev" = "-p" ] && prefix=$a
+      prev=$a
+    done
+    mkdir -p "$out"
+    cp "$in" "$out/${prefix}_reoriented.fasta"
+    ''',
+    'checkm2': '''
+    [ "$1" = "database" ] && exit 0
+    out=""; prev=""
+    for a in "$@"; do [ "$prev" = "-o" ] && out=$a; prev=$a; done
+    mkdir -p "$out"
+    printf 'Name\tCompleteness\tContamination\n' > "$out/quality_report.tsv"
+    printf 'asm\t99.98\t0.12\n' >> "$out/quality_report.tsv"
+    ''',
+    'busco': '''
+    out=""; path=""; prev=""
+    for a in "$@"; do [ "$prev" = "-o" ] && out=$a; [ "$prev" = "--out_path" ] && path=$a; prev=$a; done
+    mkdir -p "$path/$out"
+    {
+      echo "# The lineage dataset is: bacteria_odb10 (Creation date: 2024-01-08)"
+      echo "C:99.2%[S:99.0%,D:0.2%],F:0.3%,M:0.5%,n:124"
+    } > "$path/$out/short_summary.specific.bacteria_odb10.txt"
+    ''',
+    'barrnap': '''
+    if [ "$1" = "--version" ]; then echo "barrnap 0.9"; exit 0; fi
+    printf 'contig_1\tbarrnap:0.9\trRNA\t1\t120\t0\t+\t.\tName=16S_rRNA;product=16S\n'
+    printf 'contig_1\tbarrnap:0.9\trRNA\t200\t320\t0\t+\t.\tName=23S_rRNA;product=23S\n'
+    printf 'contig_1\tbarrnap:0.9\trRNA\t400\t450\t0\t+\t.\tName=5S_rRNA;product=5S\n'
+    ''',
+    'tRNAscan-SE': '''
+    out=""; prev=""
+    for a in "$@"; do [ "$prev" = "-o" ] && out=$a; prev=$a; done
+    {
+      printf 'Sequence\ttRNA\tBounds\tBounds\ttRNA\tCodon\tIntron\tIntron\tInf\n'
+      printf 'Name\t#\tBegin\tEnd\tType\t\t\t\tScore\n'
+      printf -- '--------\t---\t----\t----\t----\t-----\t-----\t----\t-----\n'
+      printf 'contig_1\t1\t100\t176\tAla\tAGC\t0\t0\t80.0\n'
+      printf 'contig_1\t2\t300\t376\tGly\tGCC\t0\t0\t80.0\n'
+    } > "$out"
+    ''',
+    'meryl': '''
+    out=""; prev=""
+    for a in "$@"; do [ "$prev" = "output" ] && out=$a; prev=$a; done
+    mkdir -p "$out"
+    ''',
+    'merqury.sh': '''
+    printf 'asm\t100\t1000\t54.50\t0.00001\n' > "$3.qv"
+    ''',
+    'mash': '''
+    if [ "$1" = "--version" ]; then echo 2.3; exit 0; fi
+    printf 'refseq-NZ-GCF_000005845.2-Escherichia_coli.fna\tquery\t0.0010\t0\t995/1000\n'
+    ''',
+    'datasets': '''
+    if [ "$1" = "summary" ]; then
+      printf '{"reports":[{"organism":{"organism_name":"Escherichia coli"}}]}\n'
+      exit 0
+    fi
+    out=""; prev=""
+    for a in "$@"; do [ "$prev" = "--filename" ] && out=$a; prev=$a; done
+    python3 -c "import sys,zipfile; z=zipfile.ZipFile(sys.argv[1],'w'); z.writestr('ncbi_dataset/data/GCF_000005845.2/ref.fna','>r\\nACGTACGT\\n'); z.close()" "$out"
+    ''',
+    'fastANI': '''
+    out=""; prev=""
+    for a in "$@"; do [ "$prev" = "-o" ] && out=$a; prev=$a; done
+    printf 'q\tr\t99.99\t50\t50\n' > "$out"
+    ''',
     'seqkit': '''
     if [ "$1" = "version" ]; then echo "seqkit v2.8.0"; exit 0; fi
     printf 'file\tformat\ttype\tnum_seqs\tsum_len\tN50\tAvgQual\tGC(%%)\n'
@@ -200,6 +270,11 @@ def stub_bin(tmp_path_factory, monkeypatch):
                         + '\n')
         stub.chmod(0o755)
     monkeypatch.setenv('PATH', f'{bin_dir}{os.pathsep}{os.environ["PATH"]}')
+    # A stub database folder so the optional modules that need one (mash species ID) run too
+    db_dir = tmp_path_factory.mktemp('stub_db')
+    (db_dir / 'mash').mkdir()
+    (db_dir / 'mash' / 'refseq.msh').write_bytes(b'stub')
+    monkeypatch.setenv('HASHBROWN_DB', str(db_dir))
     return bin_dir
 
 

@@ -29,11 +29,18 @@ output/
 └── 8_report/
     ├── index.html                 run overview: one row per sample
     ├── <sample>.html              the sample's report: read funnel (raw → trimmed → filtered),
-    │                              assembly stage by stage, per-contig coverage, figures, links
+    │                              assembly stage by stage (with Merqury QV), species confirmation,
+    │                              completeness, per-contig coverage, figures, links
     ├── <sample>.pdf               print twin of the HTML (needs WeasyPrint, skipped otherwise)
     ├── tables/                    every report table as TSV
+    ├── qc/<sample>/               raw outputs of the optional modules (CheckM2, BUSCO, Merqury, ANI)
     └── pycoqc/                    per-stage pycoQC-ng reports (needs pip install pycoqc-ng)
 ```
+
+When [dnaapler](https://github.com/gbouras13/dnaapler) is installed, the final assembly of each sample is
+reoriented in place (chromosome starts at *dnaA*, plasmids at their *rep* gene) and the pre-reorientation
+sequence is kept beside it as `<sample>_unoriented.fasta`; the dot plots always compare pre-reorientation
+sequences, so a rotation never shows up as a structural change.
 
 The **final assembly** of each sample is the deepest one present: `6_polished_short/`, else
 `4_polished_long/`, else `3_assembled_long/`.

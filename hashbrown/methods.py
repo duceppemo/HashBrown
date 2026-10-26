@@ -21,7 +21,7 @@ class Sample:
     def __init__(self):
         self.nanopore = SimpleNamespace(raw='', trimmed='', filtered='')
         self.illumina = SimpleNamespace(raw=[], trimmed=[])
-        self.assembly = SimpleNamespace(raw='', medaka='', polypolish='')
+        self.assembly = SimpleNamespace(raw='', medaka='', polypolish='', unoriented='')
         self.bam = SimpleNamespace(raw='')
 
     def best_nanopore(self):

@@ -42,6 +42,33 @@ Give long reads (`-l`), short reads (`-s`), or both; the pipeline follows the in
 
 Pick the Medaka model that matches your flowcell and basecaller: `hashbrown --list-models`.
 
+## Optional QC modules
+
+Every run ends with an HTML report (`8_report/`, or `4_report/` without long reads). The core of it —
+stage funnels, coverage, figures — needs nothing extra. The deeper QC runs **only when its tool is
+installed** (any missing one is reported as "skipped" with the install hint, never an error):
+
+| Tool | Adds to the report | Install |
+| --- | --- | --- |
+| [pycoQC-ng](https://github.com/duceppemo/pycoqc-ng) | per-stage read QC pages, both platforms | `pip install pycoqc-ng` |
+| WeasyPrint | the PDF twin of the report | `conda install weasyprint` |
+| dnaapler | final assemblies reoriented to *dnaA*/*rep* | `conda install dnaapler` |
+| Merqury | consensus QV per assembly stage (short-read k-mers) | `conda install merqury` |
+| mash + NCBI datasets + fastANI (or skani) | species confirmation: closest genome and ANI | `conda install mash ncbi-datasets-cli fastani` |
+| CheckM2 | completeness / contamination | `conda install checkm2` |
+| BUSCO | single-copy ortholog completeness (auto-lineage) | `conda install busco` |
+| barrnap, tRNAscan-SE | rRNA / tRNA sanity counts | `conda install barrnap trnascan-se` |
+
+Two modules need a local database first (default `~/.hashbrown/db`, override with `$HASHBROWN_DB`):
+
+```bash
+hashbrown db mash      # RefSeq genome sketches for the species ID (~800 MB)
+hashbrown db checkm2   # CheckM2 DIAMOND database (~3 GB)
+```
+
+Install the heavy ones in their own conda env if they ever conflict with HashBrown's — the pipeline only
+needs them on the `PATH`.
+
 ## Resuming
 
 Each major step leaves a `done_*` flag file in the output folder. Rerunning the same command skips the

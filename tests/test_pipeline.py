@@ -56,6 +56,17 @@ def test_hybrid_pipeline(stub_bin, fastq_gz, tmp_path):
     assert (report / 'tables' / 'sample1_assembly_funnel.tsv').is_file()
     assert (report / 'tables' / 'sample1_contig_coverage.tsv').is_file()
 
+    # Optional QC modules all ran through their stubs
+    assert (out / '6_polished_short' / 'sample1_unoriented.fasta').is_file()  # dnaapler, in place
+    assert 'Reoriented (dnaapler)' in page
+    assert '54.50' in page  # Merqury QV column
+    assert 'Species confirmation' in page and 'Escherichia coli' in page and '99.99%' in page
+    assert 'CheckM2 completeness' in page and '99.98' in page
+    assert 'bacteria_odb10' in page  # BUSCO
+    assert '1x 16S' in page and '2 tRNAs' in page
+    summary = (report / 'tables' / 'sample1_identity_completeness.tsv').read_text()
+    assert 'completeness' in summary and 'ani' in summary
+
     # No working leftovers
     assert not (out / '3_assembled_long' / 'sample1').exists()  # flye working folder
     assert not list((out / '6_polished_short').glob('*.sam'))
