@@ -26,6 +26,13 @@ output/
     ├── mummer_long/               <sample>_medaka.ps dot plot: raw vs Medaka
     ├── mummer_short/              <sample>_polypolish.ps dot plot: Medaka vs short-read polished
     └── assembly_graphs/           <sample>.gfa + <sample>.png (Bandage)
+└── 8_report/
+    ├── index.html                 run overview: one row per sample
+    ├── <sample>.html              the sample's report: read funnel (raw → trimmed → filtered),
+    │                              assembly stage by stage, per-contig coverage, figures, links
+    ├── <sample>.pdf               print twin of the HTML (needs WeasyPrint, skipped otherwise)
+    ├── tables/                    every report table as TSV
+    └── pycoqc/                    per-stage pycoQC-ng reports (needs pip install pycoqc-ng)
 ```
 
 The **final assembly** of each sample is the deepest one present: `6_polished_short/`, else
@@ -42,6 +49,7 @@ output/
     ├── quast/
     ├── mapping_qc_short_reads/    flagstat + mosdepth summaries, short_read_cov.tsv
     └── assembly_graphs/           gfa_connector (SKESA) or SPAdes graphs + Bandage PNGs
+└── 4_report/                      same layout as the hybrid 8_report/
 ```
 
 ## File notes

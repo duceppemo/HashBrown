@@ -44,6 +44,18 @@ def test_hybrid_pipeline(stub_bin, fastq_gz, tmp_path):
     assert 'sample1\t10' in (qc / 'mapping_qc_long_reads' / 'long_read_cov.tsv').read_text()
     assert 'sample1\t10' in (qc / 'mapping_qc_short_reads' / 'short_read_cov.tsv').read_text()
 
+    # Report: per-sample page, run index and the machine-readable tables
+    report = out / '8_report'
+    page = (report / 'sample1.html').read_text()
+    assert 'Read QC - Long reads' in page and 'Read QC - Short reads' in page
+    assert 'Assembly - stage by stage' in page and 'Polished - short reads' in page
+    assert 'Coverage per contig' in page
+    assert 'sample1.html' in (report / 'index.html').read_text()
+    funnel = (report / 'tables' / 'sample1_read_funnel_long_reads.tsv').read_text()
+    assert funnel.startswith('stage\treads\tbases')
+    assert (report / 'tables' / 'sample1_assembly_funnel.tsv').is_file()
+    assert (report / 'tables' / 'sample1_contig_coverage.tsv').is_file()
+
     # No working leftovers
     assert not (out / '3_assembled_long' / 'sample1').exists()  # flye working folder
     assert not list((out / '6_polished_short').glob('*.sam'))
@@ -120,6 +132,13 @@ def test_short_only_skesa(stub_bin, fastq_gz, tmp_path):
     assert (qc / 'mapping_qc_short_reads' / 'se.mosdepth.summary.txt').is_file()
     coverage = (qc / 'mapping_qc_short_reads' / 'short_read_cov.tsv').read_text()
     assert 'pe\t10' in coverage and 'se\t10' in coverage
+
+    # Report: one page per sample, both in the index, no long-read section
+    report = out / '4_report'
+    page = (report / 'se.html').read_text()
+    assert 'Read QC - Short reads' in page and 'Read QC - Long reads' not in page
+    index = (report / 'index.html').read_text()
+    assert 'pe.html' in index and 'se.html' in index
 
 
 def test_short_only_spades(stub_bin, fastq_gz, tmp_path):

@@ -12,6 +12,7 @@ from hashbrown.assembly_qc import AssemblyQcMethods
 from hashbrown.illumina import IlluminaMethods
 from hashbrown.methods import Methods
 from hashbrown.nanopore import NanoporeMethods
+from hashbrown.report import ReportMethods
 
 LONG_ASSEMBLERS = ('flye', 'shasta')
 SHORT_ASSEMBLERS = ('skesa', 'spades')
@@ -291,6 +292,10 @@ class HashBrown:
             AssemblyQcMethods.mapping_qc_parallel(self.sample_dict, mapping_qc_short_folder, 'illumina',
                                                   self.cpu, self.parallel)
 
+        # Report
+        print('Building the report...')
+        ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '8_report'), 'long', self.cpu)
+
     def run_short(self):
         """Short read assembly with SKESA or SPAdes (single-end or paired-end)."""
         out = self.output_folder
@@ -332,6 +337,10 @@ class HashBrown:
         print('\tMapping QC and coverage - short reads (flagstat, mosdepth)')
         AssemblyQcMethods.mapping_qc_parallel(self.sample_dict, mapping_qc_short_folder, 'illumina',
                                               self.cpu, self.parallel)
+
+        # Report
+        print('Building the report...')
+        ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '4_report'), 'short', self.cpu)
 
 
 def main(argv=None):

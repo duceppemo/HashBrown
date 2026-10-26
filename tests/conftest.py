@@ -158,6 +158,16 @@ STUBS = {
     mkdir -p "$out"
     printf 'Assembly\\tsample\\n' > "$out/report.tsv"
     ''',
+    'seqkit': '''
+    if [ "$1" = "version" ]; then echo "seqkit v2.8.0"; exit 0; fi
+    printf 'file\tformat\ttype\tnum_seqs\tsum_len\tN50\tAvgQual\tGC(%%)\n'
+    prev=""
+    for a in "$@"; do
+      case "$a" in stats|-a|-T) continue;; -j) prev=j; continue;; esac
+      if [ "$prev" = "j" ]; then prev=""; continue; fi
+      printf '%s\tFASTQ\tDNA\t3\t36\t12\t40.0\t50.0\n' "$a"
+    done
+    ''',
     'nucmer': '''
     if [ "$1" = "--version" ]; then echo 4.0.0; exit 0; fi
     out=""; prev=""

@@ -25,7 +25,14 @@ dependencies:
   - minimap2>=2.26
   - quast>=5.2          # assembly metrics
   - mosdepth>=0.3      # mapping depth / coverage QC
+  - seqkit>=2.5         # per-stage read and assembly statistics (report)
   - mummer4>=4.0.0rc1   # nucmer dot plots: polishing before/after
   - gnuplot>=5.4        # mummerplot rendering
   - bandage>=0.8.1      # optional: pictures of the assembly graphs
+  # Report
+  - jinja2>=3.1         # HTML report rendering
+  - matplotlib-base>=3.7  # report figures
+  - weasyprint>=60      # optional: PDF twin of the HTML report
+  # Optional read QC (pip): pycoQC-ng builds per-stage reports from fastq
+  # pip install pycoqc-ng
   - pip

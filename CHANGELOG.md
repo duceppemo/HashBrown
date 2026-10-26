@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **Per-sample HTML report** (`8_report/`, or `4_report/` for short-read-only runs) with a run-level
+  `index.html`: read funnel tables showing the effect of every read-processing stage (raw → trimmed →
+  filtered: reads, bases, N50, mean Q, %GC, coverage, % kept), assembly stage-by-stage table
+  (assembled → Medaka → short-read polished), per-contig mosdepth coverage (long and short reads side by
+  side), length/quality distribution and coverage figures, and links to the QUAST/pycoQC/dot plot details.
+  Every table is also written as TSV under `8_report/tables/`. A PDF twin is written when WeasyPrint is
+  installed, and per-stage [pycoQC-ng](https://github.com/duceppemo/pycoqc-ng) reports when
+  `pip install pycoqc-ng` was run — both are optional and skipped with a note otherwise.
+  New core dependencies: seqkit, jinja2, matplotlib. The full reporting/QC roadmap is in
+  `docs/reporting_plan.md`.
+
 ## 1.0.0 (2026-10-24)
 
 HashBrown is the merge of [BGA](https://github.com/duceppemo/BGA) (long-read and hybrid assembly) and
