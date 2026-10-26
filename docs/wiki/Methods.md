@@ -47,9 +47,10 @@ What each step runs, with the exact settings that are not defaults.
 ## QC (every run)
 
 - **QUAST** over the final assemblies (`--min-contig 1000`).
-- **Mapping QC** per sample and read type, on a minimap2 mapping (`map-ont` or `sr` preset, unmapped
-  reads dropped, duplicates removed with `samtools markdup`): `samtools flagstat` for the mapping rates
-  and mosdepth for the depth per contig.
+- **Mapping QC** per sample, read type **and read-processing stage** (raw, trimmed, filtered — every
+  stage the run produced), on a minimap2 mapping (`map-ont` or `sr` preset, unmapped reads dropped,
+  duplicates removed with `samtools markdup`): `samtools flagstat` for the mapping rates and mosdepth
+  for the depth. Comparing stages shows what trimming/filtering bought (mapping rate up, depth cost).
 - **Coverage**: mosdepth's mean depth over the final assembly, one table per read type.
 - **Dot plots**: nucmer + mummerplot comparing the assembly before and after each polishing stage
   (raw vs Medaka, Medaka vs short-read polished) — a quick visual check that polishing did not

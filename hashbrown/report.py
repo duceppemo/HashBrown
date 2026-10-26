@@ -8,9 +8,10 @@ import csv
 import gzip
 import io
 import os
+import re
 import shutil
 import subprocess
-from datetime import date
+from datetime import date, datetime
 
 from jinja2 import Template
 
@@ -18,6 +19,13 @@ from hashbrown import __version__
 from hashbrown.methods import Methods
 
 SAMPLED_READS = 10000  # reads per stage used for the distribution figures
+
+# Figure palette: embedded SVGs carry fixed colors, so every one must stay legible on both the light
+# (#ffffff) and dark (#0d1117) page. The series order is CVD-checked (deutan/protan/tritan) on both
+# surfaces; slot 1 is the HashBrown golden. Ink is the mid gray that reads on both backgrounds.
+FIG_SERIES = ('#c87f3a', '#3987e5', '#199e70', '#8a7ee0', '#d55181')
+FIG_NEUTRAL = '#898781'  # overflow series / unassigned
+FIG_INK = '#767d89'      # axis text, ticks, spines
 
 
 class ReportMethods:

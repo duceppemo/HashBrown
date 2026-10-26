@@ -41,8 +41,11 @@ def test_hybrid_pipeline(stub_bin, fastq_gz, tmp_path):
     assert (qc / 'mapping_qc_short_reads' / 'sample1.flagstat.txt').is_file()
     assert (qc / 'mummer_long' / 'sample1_medaka.ps').is_file()
     assert (qc / 'mummer_short' / 'sample1_polypolish.ps').is_file()
-    assert 'sample1\t10' in (qc / 'mapping_qc_long_reads' / 'long_read_cov.tsv').read_text()
-    assert 'sample1\t10' in (qc / 'mapping_qc_short_reads' / 'short_read_cov.tsv').read_text()
+    assert 'sample1\traw\t10' in (qc / 'mapping_qc_long_reads' / 'long_read_cov.tsv').read_text()
+    short_cov = (qc / 'mapping_qc_short_reads' / 'short_read_cov.tsv').read_text()
+    assert 'sample1\traw\t10' in short_cov and 'sample1\ttrimmed\t10' in short_cov  # one row per stage
+    assert (qc / 'mapping_qc_short_reads' / 'sample1_trimmed.flagstat.txt').is_file()
+    assert (qc / 'mapping_qc_short_reads' / 'sample1_raw.mosdepth.summary.txt').is_file()
 
     # Report: per-sample page, run index and the machine-readable tables
     report = out / '8_report'
@@ -161,7 +164,7 @@ def test_short_only_skesa(stub_bin, fastq_gz, tmp_path):
     assert (qc / 'mapping_qc_short_reads' / 'pe.flagstat.txt').is_file()
     assert (qc / 'mapping_qc_short_reads' / 'se.mosdepth.summary.txt').is_file()
     coverage = (qc / 'mapping_qc_short_reads' / 'short_read_cov.tsv').read_text()
-    assert 'pe\t10' in coverage and 'se\t10' in coverage
+    assert 'pe\traw\t10' in coverage and 'se\traw\t10' in coverage
 
     # Report: one page per sample, both in the index, no long-read section
     report = out / '4_report'

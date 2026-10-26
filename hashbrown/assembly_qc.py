@@ -4,6 +4,7 @@ import csv
 import glob
 import gzip
 import os
+import shutil
 import subprocess
 from concurrent import futures
 
@@ -73,24 +74,15 @@ class AssemblyQcMethods:
                 os.remove(working_file)
 
     @staticmethod
-    def map_minimap2(sample, sample_obj, read_type, output_folder, cpu):
-        """Map the best reads of that type onto the best assembly; returns the sorted, deduplicated bam."""
-        # Figure out which reads to use
-        r1, r2 = '', ''
-        if read_type == 'nanopore':
-            r1 = sample_obj.best_nanopore()
-        else:  # illumina
-            reads = sample_obj.best_illumina()
-            if not reads:
-                return sample, ''
-            r1 = reads[0]
-            r2 = reads[1] if len(reads) == 2 else ''
+    def map_minimap2(reads, read_type, ref, output_folder, prefix, cpu):
+        """Map one stage's reads onto the assembly; returns the sorted, deduplicated bam path."""
+        reads = [f for f in reads if f and os.path.exists(f)]
+        if not (reads and ref and os.path.exists(ref)):
+            return ''
+        r1 = reads[0]
+        r2 = reads[1] if len(reads) == 2 else ''
 
-        ref = sample_obj.best_assembly()
-        if not (r1 and ref and os.path.exists(ref)):
-            return sample, ''
-
-        output_bam = os.path.join(output_folder, sample + '.bam')
+        output_bam = os.path.join(output_folder, prefix + '.bam')
 
         preset = 'map-ont' if read_type == 'nanopore' else 'sr'
         minimap2_cmd = ['minimap2', '-a', '-x', preset, '-t', str(cpu), ref, r1] + ([r2] if r2 else [])
@@ -122,41 +114,63 @@ class AssemblyQcMethods:
         if not os.path.exists(output_bam):
             output_bam = ''
 
-        return sample, output_bam
+        return output_bam
 
     @staticmethod
     def mapping_qc(sample, sample_obj, read_type, output_folder, cpu):
-        """Map the reads once, then flagstat (mapping QC) and mosdepth (depth); returns the mean depth."""
-        sample, bam = AssemblyQcMethods.map_minimap2(sample, sample_obj, read_type, output_folder, cpu)
-        if not bam:
-            return sample, 'NA'
+        """flagstat + mosdepth for EVERY read-processing stage present (raw, trimmed, filtered).
 
-        # Mapping QC
-        with open(os.path.join(output_folder, sample + '.flagstat.txt'), 'w') as f:
-            subprocess.run(['samtools', 'flagstat', bam], stdout=f, stderr=subprocess.DEVNULL)
+        Writes <sample>_<stage>.flagstat.txt and <sample>_<stage>.mosdepth.summary.txt per stage,
+        and keeps the most processed stage under the legacy names <sample>.flagstat.txt /
+        <sample>.mosdepth.summary.txt (what the per-contig coverage uses). Returns
+        (sample, {stage: mean depth}).
+        """
+        if read_type == 'nanopore':
+            stage_reads = [('raw', [sample_obj.nanopore.raw]),
+                           ('trimmed', [sample_obj.nanopore.trimmed]),
+                           ('filtered', [sample_obj.nanopore.filtered])]
+        else:  # illumina
+            stage_reads = [('raw', list(sample_obj.illumina.raw)),
+                           ('trimmed', list(sample_obj.illumina.trimmed))]
+        ref = sample_obj.best_assembly()
 
-        # Depth per contig and overall (writes <sample>.mosdepth.summary.txt)
-        prefix = os.path.join(output_folder, sample)
-        cmd_mosdepth = ['mosdepth', '-x', '-n', '-t', str(cpu), prefix, bam]
-        subprocess.run(cmd_mosdepth, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        depths = {}
+        best_prefix = ''
+        for stage, reads in stage_reads:
+            prefix = os.path.join(output_folder, f'{sample}_{stage}')
+            bam = AssemblyQcMethods.map_minimap2(reads, read_type, ref, output_folder,
+                                                 f'{sample}_{stage}', cpu)
+            if not bam:
+                continue
 
-        # The overall mean is on the "total" row of the summary
-        avg_cov = 0
-        summary = prefix + '.mosdepth.summary.txt'
-        if os.path.exists(summary):
-            with open(summary) as f:
-                for line in f:
-                    fields = line.split('\t')
-                    if fields[0] == 'total':
-                        avg_cov = round(float(fields[3]))
+            with open(prefix + '.flagstat.txt', 'w') as f:
+                subprocess.run(['samtools', 'flagstat', bam], stdout=f, stderr=subprocess.DEVNULL)
+            subprocess.run(['mosdepth', '-x', '-n', '-t', str(cpu), prefix, bam],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
-        # The bam and mosdepth working files were only needed here
-        for ext in ('.bam', '.bam.bai', '.bai', '.mosdepth.global.dist.txt'):
-            leftover = os.path.join(output_folder, sample + ext)
-            if os.path.exists(leftover):
-                os.remove(leftover)
+            # The overall mean is on the "total" row of the summary
+            summary = prefix + '.mosdepth.summary.txt'
+            if os.path.exists(summary):
+                with open(summary) as f:
+                    for line in f:
+                        fields = line.split('\t')
+                        if fields[0] == 'total':
+                            depths[stage] = round(float(fields[3]))
+                            best_prefix = prefix
 
-        return sample, avg_cov
+            # The bam and mosdepth working files were only needed here
+            for ext in ('.bam', '.bam.bai', '.bai', '.mosdepth.global.dist.txt'):
+                leftover = prefix + ext
+                if os.path.exists(leftover):
+                    os.remove(leftover)
+
+        # The most processed stage also under the legacy names
+        if best_prefix:
+            for ext in ('.flagstat.txt', '.mosdepth.summary.txt'):
+                if os.path.exists(best_prefix + ext):
+                    shutil.copyfile(best_prefix + ext, os.path.join(output_folder, sample + ext))
+
+        return sample, depths
 
     @staticmethod
     def mapping_qc_parallel(sample_dict, output_folder, read_type, cpu, parallel):
@@ -169,13 +183,16 @@ class AssemblyQcMethods:
         with futures.ThreadPoolExecutor(max_workers=int(parallel)) as executor:
             args = ((sample, sample_obj, read_type, output_folder, max(1, int(cpu / parallel)))
                     for sample, sample_obj in sample_dict.items())
-            for sample, avg_cov in executor.map(lambda x: AssemblyQcMethods.mapping_qc(*x), args):
-                rows.append({'Sample': sample, 'AverageCoverage': avg_cov})
+            for sample, depths in executor.map(lambda x: AssemblyQcMethods.mapping_qc(*x), args):
+                if not depths:
+                    rows.append({'Sample': sample, 'Stage': '-', 'AverageCoverage': 'NA'})
+                for stage, avg_cov in depths.items():
+                    rows.append({'Sample': sample, 'Stage': stage, 'AverageCoverage': avg_cov})
 
         with open(cov_file, 'w', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=['Sample', 'AverageCoverage'], delimiter='\t')
+            writer = csv.DictWriter(f, fieldnames=['Sample', 'Stage', 'AverageCoverage'], delimiter='\t')
             writer.writeheader()
-            writer.writerows(sorted(rows, key=lambda r: r['Sample']))
+            writer.writerows(sorted(rows, key=lambda r: (r['Sample'], r['Stage'])))
 
     @staticmethod
     def run_quast(sample_dict, output_folder, cpu):

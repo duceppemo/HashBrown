@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Changed
+- **Mapping QC covers every read-processing stage**: flagstat and mosdepth now run per stage (raw,
+  trimmed, filtered) instead of only on the most processed reads, so the effect of each step on mapping
+  rate and depth is measurable; `long/short_read_cov.tsv` gained a `Stage` column.
 - **Single-end short reads can polish long-read assemblies**: Polypolish (one all-alignments SAM) and
   pyPOLCA (no `--reads2`) both run single-end, so Ion Torrent or unpaired Illumina data works in hybrid
   mode; a sample with a pair plus stray extra files keeps the pair with a warning. New `--skip-report`

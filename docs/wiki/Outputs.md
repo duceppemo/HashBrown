@@ -20,8 +20,11 @@ output/
 │                                  plus <sample>.polypolish.log, <sample>.report and <sample>.vcf (pyPOLCA)
 └── 7_assembly_qc/
     ├── quast/                     report.html / report.tsv over all final assemblies
-    ├── mapping_qc_long_reads/     <sample>.flagstat.txt + <sample>.mosdepth.summary.txt
-    │                              and long_read_cov.tsv (mean depth per sample)
+    ├── mapping_qc_long_reads/     <sample>_<stage>.flagstat.txt + <sample>_<stage>.mosdepth.summary.txt
+    │                              for EVERY read stage present (raw, trimmed, filtered); the most
+    │                              processed stage also under <sample>.flagstat.txt /
+    │                              <sample>.mosdepth.summary.txt; long_read_cov.tsv has one row per
+    │                              sample and stage
     ├── mapping_qc_short_reads/    the same with the short reads (hybrid runs), short_read_cov.tsv
     ├── mummer_long/               <sample>_medaka.ps dot plot: raw vs Medaka
     ├── mummer_short/              <sample>_polypolish.ps dot plot: Medaka vs short-read polished
