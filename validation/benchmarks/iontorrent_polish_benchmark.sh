@@ -84,9 +84,16 @@ run_sample() { # name ont_fastq ion_fastq ill_r1 ill_r2
         local ion_bases ill_bases frac
         ion_bases=$(bases_of "$ion")
         ill_bases=$(($(bases_of "$r1") + $(bases_of "$r2")))
-        frac=$(python3 -c "print(min(1.0, $ion_bases / $ill_bases))")
-        seqtk sample -s7 "$r1" "$frac" | gzip > "$work/ill_matched/${name}_R1.fastq.gz"
-        seqtk sample -s7 "$r2" "$frac" | gzip > "$work/ill_matched/${name}_R2.fastq.gz"
+        frac=$(python3 -c "print($ion_bases / $ill_bases)")
+        # seqtk reads a value >= 1 as a COUNT, so when the Illumina run is the shallower one,
+        # take it whole instead of sampling
+        if python3 -c "import sys; sys.exit(0 if $frac < 1 else 1)"; then
+            seqtk sample -s7 "$r1" "$frac" | gzip > "$work/ill_matched/${name}_R1.fastq.gz"
+            seqtk sample -s7 "$r2" "$frac" | gzip > "$work/ill_matched/${name}_R2.fastq.gz"
+        else
+            ln -sf "$r1" "$work/ill_matched/${name}_R1.fastq.gz"
+            ln -sf "$r2" "$work/ill_matched/${name}_R2.fastq.gz"
+        fi
     fi
     mkdir -p "$work/ion_reads"
     ln -sf "$ion" "$work/ion_reads/$name.fastq.gz"
