@@ -32,6 +32,9 @@ hashbrown = "hashbrown.cli:main"
 [tool.setuptools]
 packages = ["hashbrown"]
 
+[tool.setuptools.package-data]
+hashbrown = ["logo.svg"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 

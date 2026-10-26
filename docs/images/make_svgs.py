@@ -58,6 +58,29 @@ def logo():
 '''
 
 
+def report_icon():
+    """Icon-only logo variant shipped inside the package (hashbrown/logo.svg) for the reports.
+
+    Inlined into report HTML, so: no <style>, no :root variables (they would fight the page's own
+    CSS variables) and fixed theme-neutral mid-tone colors, legible on the light and dark page alike.
+    """
+    reads, ref = "#8a93a3", "#737d8e"
+    parts = [f'<rect x="12" y="20" width="130" height="118" rx="26" fill="none" '
+             f'stroke="{GOLDEN}" stroke-width="7"/>']
+    for y, strips in ROWS:
+        for x0, x1, kind in strips:
+            color = reads if kind == 'long' else ref
+            width = 7 if kind == 'long' else 6
+            parts.append(f'<path d="M{x0},{y} H{x1}" fill="none" stroke="{color}" '
+                         f'stroke-width="{width}" stroke-linecap="round"/>')
+    body = "\n  ".join(parts)
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 154 158" width="27" height="28"
+  role="img" aria-label="HashBrown">
+  {body}
+</svg>
+'''
+
+
 def box(x, y, w, h, title, sub, t, dashed=False):
     dash = ' stroke-dasharray="5 4"' if dashed else ''
     return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="9" fill="{t["box"]}" '
@@ -150,8 +173,13 @@ def pipeline():
 
 
 if __name__ == '__main__':
-    with open('hashbrown_logo.svg', 'w') as f:
+    import os
+    here = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(here, 'hashbrown_logo.svg'), 'w') as f:
         f.write(logo())
-    with open('pipeline.svg', 'w') as f:
+    with open(os.path.join(here, 'pipeline.svg'), 'w') as f:
         f.write(pipeline())
-    print('Wrote hashbrown_logo.svg and pipeline.svg')
+    package_icon = os.path.join(here, '..', '..', 'hashbrown', 'logo.svg')
+    with open(package_icon, 'w') as f:
+        f.write(report_icon())
+    print('Wrote hashbrown_logo.svg, pipeline.svg and hashbrown/logo.svg')

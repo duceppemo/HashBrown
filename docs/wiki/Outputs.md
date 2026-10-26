@@ -29,7 +29,7 @@ output/
     ├── mummer_long/               <sample>_medaka.ps dot plot: raw vs Medaka
     ├── mummer_short/              <sample>_polypolish.ps dot plot: Medaka vs short-read polished
     └── assembly_graphs/           <sample>.gfa + <sample>.png (Bandage)
-└── 8_report/
+└── 8_report/                     ← example: [HTML](https://htmlpreview.github.io/?https://github.com/duceppemo/HashBrown/blob/main/docs/example_report/MG1655.html) · [PDF](https://github.com/duceppemo/HashBrown/blob/main/docs/example_report/MG1655.pdf) (real E. coli K-12 run)
     ├── index.html                 run overview: one row per sample
     ├── <sample>.html              the sample's report: read funnel (raw → trimmed → filtered),
     │                              assembly stage by stage (with Merqury QV), species confirmation,

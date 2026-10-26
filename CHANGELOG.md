@@ -17,6 +17,12 @@
   than fix them (`--short-polisher none` is suggested).
 
 ### Added
+- **QA-grade report design**: branded masthead (logo + version), summary verdict cards, a QC criteria
+  table with pass/warn/fail chips anchored on the MIMAG standard (Bowers et al. 2017) and an overall
+  draft-quality tier, a traceability appendix (software versions from log.txt, exact command line, run
+  date), PDF page footers with numbering, per-stage mapped coverage in the read funnel, restyled
+  tables and figures in HashBrown's palette, light/dark and print safe. Example report:
+  `docs/example_report/`.
 - **Contamination screening and read-based profiling** (reporting phase 4): ConFindr verdict from the
   short reads (`hashbrown db confindr`), a GenomeScope2 genome profile (size estimate, heterozygosity,
   read error rate from the short-read 21-mers, reusing Merqury's meryl counts), and a built-in **blob

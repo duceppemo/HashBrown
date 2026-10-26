@@ -89,6 +89,13 @@ def test_hybrid_pipeline(stub_bin, fastq_gz, tmp_path):
     assert 'confindr_status' in summary or 'confindr_status' in \
         (report / 'tables' / 'sample1_identity_completeness.tsv').read_text()
 
+    # QA additions: criteria table with status chips, MIMAG verdict, traceability appendix
+    assert 'QC criteria' in page and 'status-pass' in page
+    assert 'Medium-quality draft (MIMAG)' in page  # the stub's 2 tRNA isotypes keep it below high
+    assert 'Traceability' in page and 'Software versions' in page and 'Command line' in page
+    assert 'hashbrown ' in page  # the echoed command line
+    assert 'Python' in page  # from log.txt
+
     # No working leftovers
     assert not (out / '3_assembled_long' / 'sample1').exists()  # flye working folder
     assert not list((out / '6_polished_short').glob('*.sam'))

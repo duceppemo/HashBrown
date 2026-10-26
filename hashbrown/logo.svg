@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 154 158" width="27" height="28"
+  role="img" aria-label="HashBrown">
+  <rect x="12" y="20" width="130" height="118" rx="26" fill="none" stroke="#c87f3a" stroke-width="7"/>
+  <path d="M38,34 H92" fill="none" stroke="#8a93a3" stroke-width="7" stroke-linecap="round"/>
+  <path d="M98,34 H116" fill="none" stroke="#737d8e" stroke-width="6" stroke-linecap="round"/>
+  <path d="M28,52 H44" fill="none" stroke="#737d8e" stroke-width="6" stroke-linecap="round"/>
+  <path d="M50,52 H118" fill="none" stroke="#8a93a3" stroke-width="7" stroke-linecap="round"/>
+  <path d="M24,70 H86" fill="none" stroke="#8a93a3" stroke-width="7" stroke-linecap="round"/>
+  <path d="M92,70 H108" fill="none" stroke="#737d8e" stroke-width="6" stroke-linecap="round"/>
+  <path d="M114,70 H130" fill="none" stroke="#737d8e" stroke-width="6" stroke-linecap="round"/>
+  <path d="M26,88 H42" fill="none" stroke="#737d8e" stroke-width="6" stroke-linecap="round"/>
+  <path d="M48,88 H64" fill="none" stroke="#737d8e" stroke-width="6" stroke-linecap="round"/>
+  <path d="M70,88 H126" fill="none" stroke="#8a93a3" stroke-width="7" stroke-linecap="round"/>
+  <path d="M32,106 H98" fill="none" stroke="#8a93a3" stroke-width="7" stroke-linecap="round"/>
+  <path d="M104,106 H122" fill="none" stroke="#737d8e" stroke-width="6" stroke-linecap="round"/>
+  <path d="M42,124 H58" fill="none" stroke="#737d8e" stroke-width="6" stroke-linecap="round"/>
+  <path d="M64,124 H114" fill="none" stroke="#8a93a3" stroke-width="7" stroke-linecap="round"/>
+</svg>

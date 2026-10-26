@@ -157,6 +157,7 @@ class HashBrown:
         self.ion_torrent = args.ion_torrent
         self.annotate = args.annotate
         self.skip_report = args.skip_report
+        self.cmdline = getattr(args, 'cmdline', '')
 
         # Performance
         self.cpu = args.threads
@@ -327,7 +328,7 @@ class HashBrown:
         else:
             print('Building the report...')
             ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '8_report'), 'long',
-                                        self.cpu, self.annotate)
+                                        self.cpu, self.annotate, cmdline=self.cmdline)
 
     def run_short(self):
         """Short read assembly with SKESA or SPAdes (single-end or paired-end)."""
@@ -382,7 +383,7 @@ class HashBrown:
         else:
             print('Building the report...')
             ReportMethods.build_reports(self.sample_dict, out, os.path.join(out, '4_report'), 'short',
-                                        self.cpu, self.annotate)
+                                        self.cpu, self.annotate, cmdline=self.cmdline)
 
 
 MASH_SKETCH_URL = 'https://gembox.cbcb.umd.edu/mash/refseq.genomes.k21s1000.msh'
@@ -433,6 +434,7 @@ def main(argv=None):
     if argv[:1] == ['db']:
         return db_main(argv[1:])
     args = parse_arguments(argv)
+    args.cmdline = 'hashbrown ' + ' '.join(argv)  # echoed in the report's traceability appendix
 
     if args.list_models:
         models = NanoporeMethods.list_medaka_models()
