@@ -27,6 +27,8 @@ requirements:
   run:
     - python >=3.10
     - psutil >=5.9
+    - jinja2 >=3.1
+    - matplotlib-base >=3.7
     - flye >=2.9
     - shasta >=0.11
     - medaka >=2.0
@@ -43,9 +45,14 @@ requirements:
     - minimap2 >=2.26
     - quast >=5.2
     - mosdepth >=0.3
+    - seqkit >=2.5
     - mummer4 >=4.0.0rc1
     - gnuplot >=5.4
     - bandage >=0.8.1
+    - weasyprint >=60
+    # The deeper report modules (pycoQC-ng, dnaapler, Merqury, mash, CheckM2, BUSCO, Bakta, MLST,
+    # MOB-suite, AMRFinderPlus, abricate, ConFindr, GenomeScope2, ...) are optional by design:
+    # auto-detected on the PATH and reported as skipped otherwise. See the wiki's Usage page.
 
 test:
   commands:
