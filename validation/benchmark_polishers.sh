@@ -28,6 +28,8 @@ THREADS=${3:-$(nproc)}
 
 LONG_POLISHERS=(none medaka)
 SHORT_POLISHERS=(none polypolish pypolca polypolish+pypolca)
+# Extra hashbrown options for every run, e.g. HASHBROWN_EXTRA_ARGS="--model r1041_e82_400bps_sup_v4.3.0"
+EXTRA_ARGS=${HASHBROWN_EXTRA_ARGS:-}
 
 command -v hashbrown >/dev/null || { echo "hashbrown is not on the PATH" >&2; exit 1; }
 command -v quast.py >/dev/null || { echo "quast.py is not on the PATH" >&2; exit 1; }
@@ -71,7 +73,7 @@ for sample_dir in "$DATA"/*/; do
     base="$OUT/$sample/base"
     echo "=== $sample: assembling (base run) ==="
     hashbrown -l "$long_dir" -s "$short_dir" -o "$base" \
-        --long-polisher none --short-polisher none -t "$THREADS"
+        --long-polisher none --short-polisher none -t "$THREADS" $EXTRA_ARGS
 
     for lp in "${LONG_POLISHERS[@]}"; do
         for sp in "${SHORT_POLISHERS[@]}"; do
@@ -85,7 +87,7 @@ for sample_dir in "$DATA"/*/; do
                        "$run/6_polished_short" "$run/7_assembly_qc"
             fi
             hashbrown -l "$long_dir" -s "$short_dir" -o "$run" \
-                --long-polisher "$lp" --short-polisher "$sp" -t "$THREADS"
+                --long-polisher "$lp" --short-polisher "$sp" -t "$THREADS" $EXTRA_ARGS
 
             assembly=$(final_assembly "$run" "$sample") || { echo "No assembly for $sample/$combo" >&2; continue; }
             quast.py -r "$reference" -o "$run/quast_vs_truth" -t "$THREADS" --no-icarus "$assembly" \
