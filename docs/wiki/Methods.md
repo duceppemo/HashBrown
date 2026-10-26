@@ -10,9 +10,12 @@ What each step runs, with the exact settings that are not defaults.
 3. **Assemble**: Flye (`--nano-hq`, 3 polishing iterations; expects recent super-accuracy basecalls) or
    Shasta (`--config Nanopore-May2022`, minimum read length 3,000 unless `--min-size`). The assembly
    graph is kept and drawn with Bandage; per-sample stats land in `flye_stats.tsv` / `shasta_stats.tsv`.
-4. **Polish, long reads**: Medaka (`medaka_consensus`) with the model from `--model`. Pick the model that
-   matches your flowcell/basecaller — a wrong model *adds* errors. `--long-polisher none` skips this
-   (see [Validation](Validation) for measuring whether Medaka still helps on your basecalls).
+4. **Polish, long reads**: Medaka (`medaka_consensus`) with the model from `--model`. The default is
+   ONT's bacterial methylation model, the best performer in our [benchmarks](Validation); for
+   non-bacterial samples or other flowcells pick the model matching your basecaller — a wrong model
+   *adds* errors. `--long-polisher none` skips this: do that for recent super-accuracy basecalls at high
+   coverage (little left to fix), and **always for non-Nanopore long reads** (Medaka on PacBio doubled
+   the mismatch rate in our benchmark).
 
 ## Short reads (hybrid polishing)
 

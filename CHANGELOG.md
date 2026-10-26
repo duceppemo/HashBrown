@@ -33,6 +33,12 @@ Medaka ≥ 2.0 is PyTorch-based and the conflict is gone. Both repositories' his
   unsolvable. The QC folders are `mapping_qc_long_reads/` and `mapping_qc_short_reads/`, holding the
   flagstat and mosdepth summaries and the coverage tables.
 
+- **The default Medaka model is `r1041_e82_400bps_bacterial_methylation`** (ONT's bacterial model):
+  in the gold-standard benchmarks (see the wiki's Validation page) it removed 3x more indels than the
+  matched sup model on real R10.4.1 data and never performed worse. The defaults
+  `--long-polisher medaka --short-polisher polypolish+pypolca` are confirmed by the same benchmarks;
+  use `--long-polisher none` for non-Nanopore long reads (Medaka on PacBio doubles the mismatch rate).
+
 ### Fixed
 - The thread/parallel/memory checks actually clamp the values now (the old comparisons could never be true,
   so invalid values passed through).

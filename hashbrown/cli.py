@@ -65,13 +65,14 @@ def parse_arguments(argv=None):
                         help='Trim short reads with fastp before polishing or assembling. Default is off.')
     parser.add_argument('--long-polisher',
                         choices=['medaka', 'none'], default='medaka',
-                        help='Long read polisher for the long read assembly. Default is "medaka".')
+                        help='Long read polisher for the long read assembly. Default is "medaka". '
+                             'Use "none" for non-Nanopore long reads: Medaka is Nanopore-trained and '
+                             'actively damages assemblies made from other platforms.')
     parser.add_argument('--model',
-                        type=str, default='r1041_e82_400bps_sup_v5.2.0',
-                        help='Medaka model. Default is for an R10.4.1 v14 flowcell, super accuracy '
-                             'basecalls ("%(default)s"). Match it to your basecaller, or try '
-                             '"r1041_e82_400bps_bacterial_methylation", ONT\'s model for bacteria. '
-                             'See --list-models.')
+                        type=str, default='r1041_e82_400bps_bacterial_methylation',
+                        help='Medaka model. The default is ONT\'s bacterial model (R10.4.1 flowcells, '
+                             'any recent basecaller), the best performer in our benchmarks. For other '
+                             'flowcells pick the model matching your basecaller (--list-models).')
     parser.add_argument('--list-models',
                         action='store_true',
                         help='Show the available Medaka models and exit.')

@@ -11,6 +11,65 @@ defaults follow measurements, not habit:
   that introduced no errors in earlier tests (Polypolish and pyPOLCA `--careful` are both designed to
   leave low-confidence regions alone).
 
+## Benchmark results (2026-10, HashBrown 1.0.0)
+
+Five tracks, every assembly scored by QUAST against a finished genome (mismatches and indels per 100 kbp,
+lower is better). Full tables and runs: `benchmark_results.tsv` under each run folder.
+
+**Simulated M. bovis AF2122/97** (badread Q20 Nanopore 100x + ART Illumina 60x; exact truth): Flye alone
+left one indel in 4.35 Mb; every polisher combination removed it and none introduced an error. All
+combinations are safe at good coverage.
+
+**Real E. coli K-12 MG1655** (MicroBench R10.4.1 PromethION 100x + NovaSeq 60x; truth U00096.3): the Flye
+assembly was already at Q63 (2 mismatch + 6 indel positions, which are real lab-stock differences from
+U00096.3). Medaka (default and bacterial model) and the short-read polishers changed at most 2 positions
+and nothing got worse. With recent super-accuracy basecalls at 100x, polishing has almost nothing left
+to fix.
+
+**Real M. bovis field strain** (R10.4.1 sup v4.3.0, 100x, compared against AF2122/97 — strain divergence
+is a constant offset, so only the differences between arms count):
+
+| Long polisher | Mismatches/100kbp | Indels/100kbp |
+| --- | --- | --- |
+| none | 19.12 | 5.42 |
+| medaka, matched sup model | 19.10 | 5.26 |
+| medaka, bacterial model | 19.10 | **4.64** |
+
+Medaka never hurt, and **ONT's bacterial methylation model removed 3x more indels than the matched sup
+model** (~34 vs ~7 genome-wide). It is HashBrown's default model since this benchmark.
+
+**Real AF2122/97 PacBio RS CLR + NextSeq** (truth = its own finished genome; the CLR base assembly is
+deliberately rough — a stress test):
+
+| Combination | Mismatches/100kbp | Indels/100kbp |
+| --- | --- | --- |
+| none + none | 52 | 516 |
+| none + polypolish | 45 | 362 |
+| none + pypolca | 52 | 511 |
+| none + polypolish→pypolca | **45** | **361** |
+| medaka + none | 100 | 594 |
+
+Polypolish does the heavy lifting and never hurts; pyPOLCA `--careful` alone declines to fix a bad
+assembly (by design) but adds a small gain after Polypolish. **Medaka on PacBio reads doubles the
+mismatches: never run Medaka on non-Nanopore reads** (`--long-polisher none`).
+
+**Real MG1655 PacBio HiFi + NovaSeq** (Flye `--pacbio-hifi` base): the HiFi assembly was near-perfect and
+short-read polishing made it marginally worse (+1 mismatch, +2 indels) because the Illumina reads come
+from a different lab stock. Polishing an already-excellent assembly with reads from a different culture
+moves it toward that culture.
+
+### What the defaults follow from this
+
+- **Hybrid Nanopore + Illumina**: keep `--long-polisher medaka --short-polisher polypolish+pypolca`
+  (the default). Gains are small on good data, large on rough assemblies, and never negative on Nanopore.
+- **Medaka model**: `r1041_e82_400bps_bacterial_methylation` (the default) for bacterial isolates on
+  R10.4.1; it beat or equalled the matched sup model everywhere.
+- **Recent sup basecalls at ≥100x**: `--long-polisher none` is acceptable — the assembler is already at
+  the error floor — but medaka costs little and still helps older basecalls (sup v4.3: −34 indels).
+- **Non-Nanopore long reads** (PacBio): always `--long-polisher none`.
+- Polish with reads **from the same culture** as the assembly; reads from a different stock of the same
+  strain introduce that stock's variants.
+
 ## Running the benchmark
 
 ```bash
