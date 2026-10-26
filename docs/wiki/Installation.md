@@ -29,8 +29,12 @@ command.
 - **Bandage** draws PNG pictures of the assembly graphs.
 - **gfa_connector** (shipped with the bioconda SKESA package) rebuilds an assembly graph for SKESA
   assemblies, which have none natively.
+- The **report's deeper QC modules** (pycoQC-ng, dnaapler, Merqury, species ID, CheckM2, BUSCO, MLST,
+  MOB-suite, AMRFinderPlus, abricate, Bakta/PGAP, ConFindr, GenomeScope2) are each optional — install
+  one and it runs. Install one-liners and the `hashbrown db` database downloads are listed under
+  [Usage → Optional QC modules](Usage#optional-qc-modules).
 
-If either is missing, HashBrown says so once and skips that output; nothing else changes.
+If any is missing, HashBrown says so once and skips that output; nothing else changes.
 
 ## Troubleshooting
 

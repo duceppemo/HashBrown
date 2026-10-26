@@ -36,6 +36,7 @@ Give long reads (`-l`), short reads (`-s`), or both; the pipeline follows the in
 | `--model` | `r1041_e82_400bps_bacterial_methylation` | Medaka model. The default is ONT's bacterial model (R10.4.1, basecaller-independent), the [benchmark](Validation) winner; `--list-models` prints the alternatives |
 | `--short-polisher` | `polypolish+pypolca` | `polypolish+pypolca`, `polypolish`, `pypolca` or `none`, applied in order |
 | `--ion-torrent` | off | the short reads are Ion Torrent data (SPAdes only) |
+| `--annotate` | `auto` | report annotation: `auto` (Bakta when installed), `bakta`, `pgap` (Docker, ~1 h/genome) or `none` |
 | `-t, --threads` | all | total threads |
 | `-p, --parallel` | 2 | samples processed at once (each gets `threads / parallel`) |
 | `-m, --memory` | 85% of RAM | memory in GB (SKESA, SPAdes) |

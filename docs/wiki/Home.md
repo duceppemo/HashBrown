@@ -3,12 +3,15 @@
 </p>
 
 HashBrown assembles bacterial genomes from Nanopore long reads, Illumina (or Ion Torrent) short reads, or
-both, and ends every run with QC. Like its namesake — shredded potatoes pressed into one piece — it presses
-reads into one assembly. It merges and supersedes [BGA](https://github.com/duceppemo/BGA) and
+both, and ends every run with QC and a per-sample HTML/PDF report: stage-by-stage read and assembly
+funnels, coverage, consensus QV, species confirmation, completeness, typing, AMR genes, annotation and
+contamination screens ([Methods](Methods) has the full list; the deeper modules are optional and
+auto-detected). Like its namesake — shredded potatoes pressed into one piece — it presses reads into one
+assembly. It merges and supersedes [BGA](https://github.com/duceppemo/BGA) and
 [BGA_short](https://github.com/duceppemo/BGA_short).
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/duceppemo/HashBrown/main/docs/images/pipeline.svg" alt="The HashBrown pipeline" width="860">
+  <img src="https://raw.githubusercontent.com/duceppemo/HashBrown/main/docs/images/pipeline.svg" alt="The HashBrown pipeline" width="690">
 </p>
 
 ## The three ways to run it

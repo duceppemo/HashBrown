@@ -76,16 +76,18 @@ def arrow(d, t, marker='ah', dashed=False):
 
 
 def pipeline():
-    # Two columns flowing top to bottom, a routing gutter between them, one QC box across the bottom.
-    # Long reads go down the left column; short reads down the right. In hybrid runs the trimmed short
-    # reads cross the gutter (golden dashed connector) to polish the long-read assembly.
+    # Two columns flowing top to bottom, a routing gutter between them, and two full-width boxes
+    # (QC, then the report) across the bottom. Long reads go down the left column; short reads down
+    # the right. In hybrid runs the trimmed short reads cross the gutter (golden dashed connector)
+    # to polish the long-read assembly, and both columns end with an optional reorientation.
     t = AUTO
     bw, bh = 250, 52           # box size
     lx, rx = 40, 400           # column left edges
     lc, rc = lx + bw / 2, rx + bw / 2  # column centers (165, 525)
     gx = (lx + bw + rx) / 2    # gutter channel x (345)
-    rows = [34, 120, 206, 292]  # box tops; centers are top + 26
-    qy, qh = 378, 56           # QC box
+    rows = [34, 120, 206, 292, 378]  # box tops; centers are top + 26
+    qy, qh = 464, 56           # QC box
+    ry, rh = 554, 56           # report box
 
     parts = [
         f'<defs>'
@@ -108,15 +110,18 @@ def pipeline():
     parts.append(box(lx, rows[2], bw, bh, 'Polish (long reads)', 'Medaka · optional', t))
     parts.append(box(lx, rows[3], bw, bh, 'Polish (short reads)', 'Polypolish → pyPOLCA · hybrid only', t,
                      dashed=True))
+    parts.append(box(lx, rows[4], bw, bh, 'Reorient', 'dnaapler · optional', t, dashed=True))
     for y0, y1 in zip(rows, rows[1:], strict=False):
         parts.append(arrow(f'M{lc},{y0 + bh + 2} L{lc},{y1 - 2}', t))
-    parts.append(arrow(f'M{lc},{rows[3] + bh + 2} L{lc},{qy - 2}', t))
+    parts.append(arrow(f'M{lc},{rows[4] + bh + 2} L{lc},{qy - 2}', t))
 
-    # Right column: the short-read path
+    # Right column: the short-read path, with Reorient aligned to the left column's
     parts.append(box(rx, rows[0], bw, bh, 'Trim', 'fastp', t))
     parts.append(box(rx, rows[1], bw, bh, 'Assemble', 'SKESA or SPAdes', t))
+    parts.append(box(rx, rows[4], bw, bh, 'Reorient', 'dnaapler · optional', t, dashed=True))
     parts.append(arrow(f'M{rc},{rows[0] + bh + 2} L{rc},{rows[1] - 2}', t))
-    parts.append(arrow(f'M{rc},{rows[1] + bh + 2} L{rc},{qy - 2}', t))
+    parts.append(arrow(f'M{rc},{rows[1] + bh + 2} L{rc},{rows[4] - 2}', t))
+    parts.append(arrow(f'M{rc},{rows[4] + bh + 2} L{rc},{qy - 2}', t))
     parts.append(f'<text x="{rc + 8}" y="284" font-size="11" font-style="italic" '
                  f'fill="{t["muted"]}">short reads only</text>')
 
@@ -128,13 +133,17 @@ def pipeline():
     parts.append(f'<text x="{gx + 8}" y="190" font-size="11" font-style="italic" '
                  f'fill="{GOLDEN}">hybrid</text>')
 
-    # QC box spanning both columns: every run ends here
+    # QC and report boxes spanning both columns: every run ends here
     parts.append(box(lx, qy, rx + bw - lx, qh, 'QC — every run',
                      'QUAST · flagstat · mosdepth · dot plots · assembly graphs', t))
+    parts.append(arrow(f'M{gx},{qy + qh + 2} L{gx},{ry - 2}', t))
+    parts.append(box(lx, ry, rx + bw - lx, rh, 'Report — &lt;sample&gt;.html + .pdf',
+                     'read &amp; assembly funnels · QV · species ID · completeness · typing · AMR · '
+                     'annotation · contamination', t))
 
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 690 452" width="690" height="452"
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 690 626" width="690" height="626"
   font-family="{FONT}">
-  <title>HashBrown pipeline: long reads are prepared, assembled and polished; short reads polish them (hybrid) or are assembled on their own; everything ends in QC</title>{style()}
+  <title>HashBrown pipeline: long reads are prepared, assembled and polished; short reads polish them (hybrid) or are assembled on their own; assemblies are optionally reoriented, and everything ends in QC and an HTML + PDF report per sample</title>{style()}
   {"".join(parts)}
 </svg>
 '''
