@@ -30,7 +30,6 @@ def test_version_flag(capsys):
     (['-l', 'long', '-o', 'out', '-a', 'spades'], 'assembles short reads only'),
     (['-s', 'short', '-o', 'out', '-a', 'flye'], 'needs long reads'),
     (['-s', 'short', '-o', 'out', '-a', 'shasta'], 'needs long reads'),
-    (['-s', 'short', '-o', 'out', '--trim-long'], 'need long reads'),
     (['-s', 'short', '-o', 'out', '--size', '5000000'], 'need long reads'),
     (['-s', 'short', '-o', 'out', '--ion-torrent'], 'need SPAdes'),
 ])
@@ -48,6 +47,16 @@ def test_default_assembler_follows_the_inputs():
     # Ion Torrent is also valid in hybrid mode (the reads are preprocessed differently and a
     # polishing warning is printed at run time)
     assert cli.parse_arguments(['-l', 'long', '-s', 'short', '-o', 'out', '--ion-torrent']).ion_torrent
+
+
+def test_read_prep_defaults_on():
+    args = cli.parse_arguments(['-l', 'long', '-s', 'short', '-o', 'out'])
+    assert args.trim_long and args.filter_long and args.trim_short
+    args = cli.parse_arguments(['-l', 'long', '-o', 'out', '--no-trim-long', '--no-filter-long'])
+    assert not args.trim_long and not args.filter_long
+    # short-only runs ignore the long-read prep steps instead of erroring
+    args = cli.parse_arguments(['-s', 'short', '-o', 'out'])
+    assert not args.trim_long and not args.filter_long and args.trim_short
 
 
 def test_short_polisher_choices():

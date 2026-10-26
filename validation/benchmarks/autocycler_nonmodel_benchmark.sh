@@ -78,7 +78,7 @@ for s in Linnocua Prettgeri; do
                    "$run/4_polished_long" "$run/5a_trimmed_short" "$run/5b_trimmed_short_report" \
                    "$run/6_polished_short" "$run/7_assembly_qc"
         fi
-        hashbrown -l "$OUT/reads_long" -s "$OUT/reads_short" -o "$run" \
+        hashbrown -l "$OUT/reads_long" -s "$OUT/reads_short" -o "$run" --no-trim-long --no-filter-long --no-trim-short \
             --long-polisher medaka --model r1041_e82_400bps_bacterial_methylation \
             --short-polisher "$sp" -t "$THREADS"
         asm="$run/6_polished_short/$s.fasta"

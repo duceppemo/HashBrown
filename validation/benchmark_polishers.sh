@@ -73,7 +73,7 @@ for sample_dir in "$DATA"/*/; do
     base="$OUT/$sample/base"
     echo "=== $sample: assembling (base run) ==="
     hashbrown -l "$long_dir" -s "$short_dir" -o "$base" \
-        --long-polisher none --short-polisher none -t "$THREADS" $EXTRA_ARGS
+        --long-polisher none --short-polisher none --no-trim-long --no-filter-long --no-trim-short -t "$THREADS" $EXTRA_ARGS
 
     for lp in "${LONG_POLISHERS[@]}"; do
         for sp in "${SHORT_POLISHERS[@]}"; do
@@ -87,7 +87,7 @@ for sample_dir in "$DATA"/*/; do
                        "$run/6_polished_short" "$run/7_assembly_qc"
             fi
             hashbrown -l "$long_dir" -s "$short_dir" -o "$run" \
-                --long-polisher "$lp" --short-polisher "$sp" -t "$THREADS" $EXTRA_ARGS
+                --long-polisher "$lp" --short-polisher "$sp" --no-trim-long --no-filter-long --no-trim-short -t "$THREADS" $EXTRA_ARGS
 
             assembly=$(final_assembly "$run" "$sample") || { echo "No assembly for $sample/$combo" >&2; continue; }
             quast.py -r "$reference" -o "$run/quast_vs_truth" -t "$THREADS" --no-icarus "$assembly" \

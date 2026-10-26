@@ -3,6 +3,11 @@
 ## Unreleased
 
 ### Changed
+- **Read preparation is now on by default**: Porechop long-read trimming, Filtlong filtering and fastp
+  short-read trimming all run unless skipped with the new `--no-trim-long`, `--no-filter-long` and
+  `--no-trim-short` flags (the old opt-in spellings remain accepted no-ops). Short-read-only runs ignore
+  the long-read prep steps instead of erroring. The benchmark scripts pin `--no-*` to keep the published
+  validation numbers reproducible.
 - **Mapping QC covers every read-processing stage**: flagstat and mosdepth now run per stage (raw,
   trimmed, filtered) instead of only on the most processed reads, so the effect of each step on mapping
   rate and depth is measurable; `long/short_read_cov.tsv` gained a `Stage` column.

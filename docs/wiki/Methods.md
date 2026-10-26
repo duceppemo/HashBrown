@@ -4,8 +4,8 @@ What each step runs, with the exact settings that are not defaults.
 
 ## Long reads
 
-1. **Trim** (`--trim-long`): Porechop removes adapters (`--check_reads 1000`).
-2. **Filter** (`--filter-long`): Filtlong keeps the best 95% of the bases (`--keep_percent 95`,
+1. **Trim** (on by default, `--no-trim-long` skips): Porechop removes leftover adapters and splits chimeric reads at middle adapters (`--check_reads 1000`). On recent basecalls (Dorado trims adapters itself) this is mostly a chimera check.
+2. **Filter** (on by default, `--no-filter-long` skips): Filtlong keeps the best 95% of the bases (`--keep_percent 95`,
    `--min_length 500`); with `--size`, at most the best 100x of the genome (`--target_bases`).
 3. **Assemble**: Flye (`--nano-hq`, 3 polishing iterations; expects recent super-accuracy basecalls) or
    Shasta (`--config Nanopore-May2022`, minimum read length 3,000 unless `--min-size`). The assembly
@@ -19,7 +19,7 @@ What each step runs, with the exact settings that are not defaults.
 
 ## Short reads (hybrid polishing)
 
-5. **Trim** (`--trim-short`): fastp with a sliding-window quality cut (`--cut_right`, mean quality 10) and
+5. **Trim** (on by default, `--no-trim-short` skips): fastp with a sliding-window quality cut (`--cut_right`, mean quality 10) and
    a 64 bp length floor; adapters auto-detected for pairs. With `--ion-torrent`, adapter trimming is
    disabled (the Torrent Suite removes adapters before export, and fastp's detection is tuned to
    Illumina chemistry); the quality window stays, since Ion quality also decays toward the 3' end.

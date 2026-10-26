@@ -59,7 +59,7 @@ run_sample() { # name ont_fastq ion_fastq ill_r1 ill_r2
             --target_bases 500000000 "$ont" 2> /dev/null | gzip > "$work/truth_long/$name.fastq.gz"
         ln -sf "$r1" "$work/truth_short/${name}_R1.fastq.gz"
         ln -sf "$r2" "$work/truth_short/${name}_R2.fastq.gz"
-        hashbrown -l "$work/truth_long" -s "$work/truth_short" -o "$work/truth_run" \
+        hashbrown -l "$work/truth_long" -s "$work/truth_short" -o "$work/truth_run" --no-trim-long --no-filter-long --no-trim-short \
             --long-polisher none -t "$THREADS" -p 1 --skip-report
         cp "$work/truth_run/6_polished_short/$name.fasta" "$work/truth.fasta"
     fi
@@ -74,7 +74,7 @@ run_sample() { # name ont_fastq ion_fastq ill_r1 ill_r2
             seqtk sample -s7 "$ont" "$frac" | gzip > "$work/arm_long/$name.fastq.gz"
         fi
         mkdir -p "$work/arms"
-        hashbrown -l "$work/arm_long" -o "$work/arms/none" --long-polisher none \
+        hashbrown -l "$work/arm_long" -o "$work/arms/none" --no-trim-long --no-filter-long --no-trim-short --long-polisher none \
             --short-polisher none -t "$THREADS" -p 1 --skip-report
     fi
 
@@ -102,7 +102,7 @@ run_sample() { # name ont_fastq ion_fastq ill_r1 ill_r2
         fi
         local short_dir=$work/ion_reads extra=(--ion-torrent)
         if [ "$arm" = illumina ]; then short_dir=$work/ill_matched; extra=(); fi
-        hashbrown -l "$work/arm_long" -s "$short_dir" -o "$work/arms/$arm" \
+        hashbrown -l "$work/arm_long" -s "$short_dir" -o "$work/arms/$arm" --no-trim-long --no-filter-long --no-trim-short \
             --long-polisher none --short-polisher polypolish+pypolca "${extra[@]}" \
             -t "$THREADS" -p 1 --skip-report
     done

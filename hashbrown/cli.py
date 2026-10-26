@@ -2,7 +2,7 @@
 
 import os
 import sys
-from argparse import ArgumentParser
+from argparse import SUPPRESS, ArgumentParser
 from multiprocessing import cpu_count
 
 from psutil import virtual_memory
@@ -55,16 +55,21 @@ def parse_arguments(argv=None):
                         type=int,
                         help='Override the automatically detected genome size for Flye. Also used by the '
                              'long read filtering step to keep the best 100x, when coverage allows.')
-    parser.add_argument('--trim-long',
-                        action='store_true',
-                        help='Trim long reads with Porechop before assembling. Default is off.')
-    parser.add_argument('--filter-long',
-                        action='store_true',
-                        help='Filter long reads with Filtlong before assembling (drops the worst 5%%). '
-                             'Default is off.')
-    parser.add_argument('--trim-short',
-                        action='store_true',
-                        help='Trim short reads with fastp before polishing or assembling. Default is off.')
+    parser.add_argument('--no-trim-long',
+                        dest='trim_long', action='store_false',
+                        help='Skip the long-read adapter trimming (Porechop), which is on by default.')
+    parser.add_argument('--no-filter-long',
+                        dest='filter_long', action='store_false',
+                        help='Skip the long-read filtering (Filtlong, drops the worst 5%% and reads '
+                             '< 500 bp), which is on by default.')
+    parser.add_argument('--no-trim-short',
+                        dest='trim_short', action='store_false',
+                        help='Skip the short-read trimming (fastp), which is on by default.')
+    # The old opt-in spellings stay accepted (and now redundant), so existing commands keep working
+    parser.add_argument('--trim-long', action='store_true', help=SUPPRESS)
+    parser.add_argument('--filter-long', action='store_true', help=SUPPRESS)
+    parser.add_argument('--trim-short', action='store_true', help=SUPPRESS)
+    parser.set_defaults(trim_long=True, filter_long=True, trim_short=True)
     parser.add_argument('--long-polisher',
                         choices=['medaka', 'none'], default='medaka',
                         help='Long read polisher for the long read assembly. Default is "medaka". '
@@ -128,8 +133,10 @@ def parse_arguments(argv=None):
                      'use "flye" or "shasta" (the short reads are used for polishing).')
     if not args.long_reads and args.assembler in LONG_ASSEMBLERS:
         parser.error(f'{args.assembler} needs long reads (-l).')
-    if not args.long_reads and (args.trim_long or args.filter_long or args.min_size or args.size):
-        parser.error('--trim-long, --filter-long, --min-size and --size need long reads (-l).')
+    if not args.long_reads:
+        args.trim_long = args.filter_long = False  # the long-read prep steps do not apply
+        if args.min_size or args.size:
+            parser.error('--min-size and --size need long reads (-l).')
     if args.ion_torrent and not args.long_reads and args.assembler != 'spades':
         parser.error('--ion-torrent short-read assemblies need SPAdes (-a spades); '
                      'SKESA has no Ion Torrent mode.')

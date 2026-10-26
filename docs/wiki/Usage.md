@@ -27,9 +27,9 @@ Give long reads (`-l`), short reads (`-s`), or both; the pipeline follows the in
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `-a, --assembler` | `flye` with `-l`, `skesa` with `-s` alone | `flye`, `shasta` (long reads), `skesa`, `spades` (short reads only) |
-| `--trim-long` | off | trim long-read adapters with Porechop before assembling |
-| `--filter-long` | off | drop the worst 5% of the long reads (and reads < 500 bp) with Filtlong |
-| `--trim-short` | off | trim the short reads with fastp (quality ≥ 10 sliding window, length ≥ 64) |
+| `--no-trim-long` | trimming on | skip the Porechop adapter trimming/chimera splitting of the long reads |
+| `--no-filter-long` | filtering on | skip the Filtlong filtering (worst 5% of bases and reads < 500 bp dropped) |
+| `--no-trim-short` | trimming on | skip the fastp trimming of the short reads (quality ≥ 10 sliding window, length ≥ 64) |
 | `--size` | auto | genome size for Flye; also caps the filtered reads at the best 100x |
 | `--min-size` | Shasta 3000 / Flye auto | minimum read length (Shasta) or minimum overlap (Flye) |
 | `--long-polisher` | `medaka` | `medaka` or `none` |
