@@ -84,14 +84,27 @@ hashbrown db confindr   # ConFindr rMLST core databases (full coverage needs a f
 ```
 
 Install the heavy ones in their own conda env if they ever conflict with HashBrown's, or just to keep the
-solve fast — the pipeline only needs them on the `PATH`. CheckM2 and BUSCO pull large dependency stacks,
-so this is the recommended way to add them:
+solve fast — the pipeline only needs them on the `PATH`. CheckM2+BUSCO pull large dependency stacks, Bakta
+and MOB-suite pin incompatible numpy versions, and abricate's Perl stack fights everything, so the
+pattern that works is one env per stubborn tool (or compatible group), exposed through a small wrapper —
+not a symlink: these tools find their helpers (blastn, diamond, Rscript, perl) through the `PATH`, so the
+wrapper must put their env first:
 
 ```bash
 conda create -n hashbrown-qc -c conda-forge -c bioconda checkm2 busco
-# expose them to HashBrown runs (conda entry points carry their own env in the shebang):
-ln -s "$(conda info --base)/envs/hashbrown-qc/bin/"{checkm2,busco} "$CONDA_PREFIX/bin/"
+for tool in checkm2 busco; do
+  cat > "$CONDA_PREFIX/bin/$tool" <<EOF
+#!/usr/bin/env bash
+export PATH=$(conda info --base)/envs/hashbrown-qc/bin:\$PATH
+exec $(conda info --base)/envs/hashbrown-qc/bin/$tool "\$@"
+EOF
+  chmod +x "$CONDA_PREFIX/bin/$tool"
+done
 ```
+
+Two gotchas we hit so you don't have to: ConFindr needs `setuptools<81` (newer ones dropped
+`pkg_resources`), and Bakta cannot share an env with MOB-suite (numpy pin conflict that conda does not
+catch).
 
 ## Resuming
 
