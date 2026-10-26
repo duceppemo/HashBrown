@@ -20,12 +20,16 @@ What each step runs, with the exact settings that are not defaults.
 ## Short reads (hybrid polishing)
 
 5. **Trim** (`--trim-short`): fastp with a sliding-window quality cut (`--cut_right`, mean quality 10) and
-   a 64 bp length floor; adapters auto-detected for pairs.
+   a 64 bp length floor; adapters auto-detected for pairs. With `--ion-torrent`, adapter trimming is
+   disabled (the Torrent Suite removes adapters before export, and fastp's detection is tuned to
+   Illumina chemistry); the quality window stays, since Ion quality also decays toward the 3' end.
 6. **Polish, short reads**: Polypolish (BWA `-a` all-alignments mapping of each mate, as its author
    specifies), then pyPOLCA with `--careful`. One Polypolish round only: a second round changed nothing in
    our tests. This pair was chosen because neither introduces errors in low-coverage regions —
    NextPolish, ntEdit and plain POLCA did, and were dropped. The final contigs are renamed `contig_1`,
-   `contig_2`, …
+   `contig_2`, … **Polish only with Illumina reads**: Ion Torrent reads share Nanopore's
+   homopolymer/indel error mode, so they can confirm those errors instead of fixing them — with
+   `--ion-torrent` HashBrown warns and suggests `--short-polisher none`.
 
 ## Short reads only
 

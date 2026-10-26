@@ -32,7 +32,7 @@ def test_version_flag(capsys):
     (['-s', 'short', '-o', 'out', '-a', 'shasta'], 'needs long reads'),
     (['-s', 'short', '-o', 'out', '--trim-long'], 'need long reads'),
     (['-s', 'short', '-o', 'out', '--size', '5000000'], 'need long reads'),
-    (['-s', 'short', '-o', 'out', '--ion-torrent'], 'only used by SPAdes'),
+    (['-s', 'short', '-o', 'out', '--ion-torrent'], 'need SPAdes'),
 ])
 def test_incoherent_flags_are_refused(argv, message, capsys):
     with pytest.raises(SystemExit):
@@ -45,6 +45,9 @@ def test_default_assembler_follows_the_inputs():
     assert cli.parse_arguments(['-s', 'short', '-o', 'out']).assembler == 'skesa'
     assert cli.parse_arguments(['-l', 'long', '-o', 'out', '-a', 'shasta']).assembler == 'shasta'
     assert cli.parse_arguments(['-s', 'short', '-o', 'out', '-a', 'spades', '--ion-torrent']).ion_torrent
+    # Ion Torrent is also valid in hybrid mode (the reads are preprocessed differently and a
+    # polishing warning is printed at run time)
+    assert cli.parse_arguments(['-l', 'long', '-s', 'short', '-o', 'out', '--ion-torrent']).ion_torrent
 
 
 def test_short_polisher_choices():

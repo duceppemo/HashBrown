@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Changed
+- **`--ion-torrent` now shapes the whole run, not just SPAdes**: fastp skips adapter trimming for Ion
+  Torrent reads (the Torrent Suite already removed the adapters; the sliding-window quality trim stays),
+  the flag is accepted in hybrid mode, and polishing a Nanopore assembly with Ion Torrent reads prints a
+  warning — both platforms share homopolymer/indel errors, so such a polish can confirm errors rather
+  than fix them (`--short-polisher none` is suggested).
+
 ### Added
 - **Contamination screening and read-based profiling** (reporting phase 4): ConFindr verdict from the
   short reads (`hashbrown db confindr`), a GenomeScope2 genome profile (size estimate, heterozygosity,

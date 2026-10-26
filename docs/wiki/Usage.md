@@ -35,7 +35,7 @@ Give long reads (`-l`), short reads (`-s`), or both; the pipeline follows the in
 | `--long-polisher` | `medaka` | `medaka` or `none` |
 | `--model` | `r1041_e82_400bps_bacterial_methylation` | Medaka model. The default is ONT's bacterial model (R10.4.1, basecaller-independent), the [benchmark](Validation) winner; `--list-models` prints the alternatives |
 | `--short-polisher` | `polypolish+pypolca` | `polypolish+pypolca`, `polypolish`, `pypolca` or `none`, applied in order |
-| `--ion-torrent` | off | the short reads are Ion Torrent data (SPAdes only) |
+| `--ion-torrent` | off | the short reads are Ion Torrent data: fastp skips adapter trimming, SPAdes uses its Ion Torrent mode. Polishing a Nanopore assembly with them is warned against (shared homopolymer errors) |
 | `--annotate` | `auto` | report annotation: `auto` (Bakta when installed), `bakta`, `pgap` (Docker, ~1 h/genome) or `none` |
 | `-t, --threads` | all | total threads |
 | `-p, --parallel` | 2 | samples processed at once (each gets `threads / parallel`) |

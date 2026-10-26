@@ -12,8 +12,13 @@ from hashbrown.methods import Methods
 
 class IlluminaMethods:
     @staticmethod
-    def trim_fastp(sample, sample_obj, output_folder, report_folder, cpu, flag):
-        """Trim a single-end file or a pair with fastp. Returns the trimmed file list."""
+    def trim_fastp(sample, sample_obj, output_folder, report_folder, cpu, flag, ion_torrent=False):
+        """Trim a single-end file or a pair with fastp. Returns the trimmed file list.
+
+        Ion Torrent reads keep the sliding-window quality trim (their quality decays toward the 3' end
+        too) but skip adapter trimming: the Torrent Suite already removed the adapters, and fastp's
+        adapter detection is tuned to Illumina chemistry.
+        """
         reads = sample_obj.illumina.raw
         trimmed = list()
 
@@ -38,8 +43,11 @@ class IlluminaMethods:
                    '--thread', str(cpu)]
             if len(reads) == 2:
                 cmd += ['--in2', reads[1],
-                        '--out2', trimmed[1],
-                        '--detect_adapter_for_pe']
+                        '--out2', trimmed[1]]
+                if not ion_torrent:
+                    cmd += ['--detect_adapter_for_pe']
+            if ion_torrent:
+                cmd += ['--disable_adapter_trimming']
 
             print(f'\t{sample}')
             subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
@@ -50,12 +58,14 @@ class IlluminaMethods:
         return sample, trimmed
 
     @staticmethod
-    def trim_fastp_parallel(sample_dict, output_folder, report_folder, cpu, parallel, flag):
+    def trim_fastp_parallel(sample_dict, output_folder, report_folder, cpu, parallel, flag,
+                            ion_torrent=False):
         Methods.make_folder(output_folder)
         Methods.make_folder(report_folder)
 
         with futures.ThreadPoolExecutor(max_workers=int(parallel)) as executor:
-            args = ((sample, sample_obj, output_folder, report_folder, max(1, int(cpu / parallel)), flag)
+            args = ((sample, sample_obj, output_folder, report_folder, max(1, int(cpu / parallel)), flag,
+                     ion_torrent)
                     for sample, sample_obj in sample_dict.items())
             for sample, trimmed in executor.map(lambda x: IlluminaMethods.trim_fastp(*x), args):
                 sample_dict[sample].illumina.trimmed = trimmed

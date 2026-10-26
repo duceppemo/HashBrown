@@ -181,3 +181,16 @@ def test_short_only_spades(stub_bin, fastq_gz, tmp_path):
     assert (out / '2_assembled_short' / 'pe.fasta').is_file()
     assert (out / '3_assembly_qc' / 'assembly_graphs' / 'pe.gfa').is_file()
     assert not (out / '2_assembled_short' / 'pe').exists()  # SPAdes working folder removed
+
+
+def test_hybrid_ion_torrent_warns_about_polishing(stub_bin, fastq_gz, tmp_path, capsys):
+    long_dir, short_dir, out = tmp_path / 'long', tmp_path / 'short', tmp_path / 'out'
+    fastq_gz(long_dir / 'sample1.fastq.gz')
+    fastq_gz(short_dir / 'sample1_R1.fastq.gz')
+    fastq_gz(short_dir / 'sample1_R2.fastq.gz')
+
+    run(['-l', str(long_dir), '-s', str(short_dir), '-o', str(out), '--ion-torrent', '-p', '1'])
+
+    output = capsys.readouterr().out
+    assert 'polishing Nanopore assemblies with Ion Torrent reads is not recommended' in output
+    assert (out / '6_polished_short' / 'sample1.fasta').is_file()  # warned, not blocked

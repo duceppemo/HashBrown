@@ -84,7 +84,11 @@ def parse_arguments(argv=None):
                              'Default is "%(default)s" (pyPOLCA runs with --careful).')
     parser.add_argument('--ion-torrent',
                         action='store_true',
-                        help='The short reads are Ion Torrent data (SPAdes assemblies only).')
+                        help='The short reads are Ion Torrent data: fastp skips adapter trimming (the '
+                             'Torrent Suite already removed them) and SPAdes runs in its Ion Torrent '
+                             'mode. Polishing a Nanopore assembly with Ion Torrent reads is NOT '
+                             'recommended: both share homopolymer/indel errors, so the polish can '
+                             'confirm rather than fix them (consider --short-polisher none).')
     parser.add_argument('--annotate',
                         choices=['auto', 'bakta', 'pgap', 'none'], default='auto',
                         help='Genome annotation in the report. "auto" (default) runs Bakta when it and '
@@ -122,8 +126,9 @@ def parse_arguments(argv=None):
         parser.error(f'{args.assembler} needs long reads (-l).')
     if not args.long_reads and (args.trim_long or args.filter_long or args.min_size or args.size):
         parser.error('--trim-long, --filter-long, --min-size and --size need long reads (-l).')
-    if args.ion_torrent and args.assembler != 'spades':
-        parser.error('--ion-torrent is only used by SPAdes (-a spades).')
+    if args.ion_torrent and not args.long_reads and args.assembler != 'spades':
+        parser.error('--ion-torrent short-read assemblies need SPAdes (-a spades); '
+                     'SKESA has no Ion Torrent mode.')
 
     return args
 
@@ -184,6 +189,11 @@ class HashBrown:
 
         Methods.make_folder(self.output_folder)
         Methods.log_versions(os.path.join(self.output_folder, 'log.txt'))
+
+        if self.ion_torrent and self.long_reads and self.short_polishers:
+            print('\tWARNING: polishing Nanopore assemblies with Ion Torrent reads is not recommended -'
+                  '\n\t         both platforms make the same homopolymer/indel errors, so the polish can'
+                  '\n\t         confirm errors instead of fixing them. Consider --short-polisher none.')
         print('\tAll good!')
 
     def run(self):
@@ -263,7 +273,8 @@ class HashBrown:
                 print('Trimming short reads with fastp...')
                 IlluminaMethods.trim_fastp_parallel(self.sample_dict, illumina_trimmed_folder,
                                                     illumina_trimmed_report_folder,
-                                                    self.cpu, self.parallel, done_trimming_short)
+                                                    self.cpu, self.parallel, done_trimming_short,
+                                                    self.ion_torrent)
 
             print('Short read polishing with {}...'.format(' and '.join(self.short_polishers)))
             IlluminaMethods.polish_parallel(self.sample_dict, polished_short_folder,
@@ -331,7 +342,8 @@ class HashBrown:
         if self.trim_short:
             print('Trimming short reads with fastp...')
             IlluminaMethods.trim_fastp_parallel(self.sample_dict, trimmed_folder, trimmed_report_folder,
-                                                self.cpu, self.parallel, done_trimming_short)
+                                                self.cpu, self.parallel, done_trimming_short,
+                                                self.ion_torrent)
 
         # Assemble
         assembler_name = 'SKESA' if self.assembler == 'skesa' else 'SPAdes'
