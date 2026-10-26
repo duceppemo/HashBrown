@@ -1,7 +1,7 @@
+import re
 from pathlib import Path
 
 import pytest
-import tomllib
 
 import hashbrown
 from hashbrown import cli
@@ -10,8 +10,10 @@ REPO = Path(__file__).resolve().parents[1]
 
 
 def test_version_in_sync_with_pyproject():
-    pyproject = tomllib.loads((REPO / 'pyproject.toml').read_text())
-    assert pyproject['project']['version'] == hashbrown.__version__
+    # tomllib only exists from Python 3.11; the project supports 3.10
+    match = re.search(r'^version = "([^"]+)"$', (REPO / 'pyproject.toml').read_text(), re.MULTILINE)
+    assert match is not None
+    assert match.group(1) == hashbrown.__version__
 
 
 def test_version_flag(capsys):
