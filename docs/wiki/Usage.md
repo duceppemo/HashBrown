@@ -82,8 +82,15 @@ hashbrown db mob        # MOB-suite database
 hashbrown db confindr   # ConFindr rMLST core databases (full coverage needs a free PubMLST account)
 ```
 
-Install the heavy ones in their own conda env if they ever conflict with HashBrown's — the pipeline only
-needs them on the `PATH`.
+Install the heavy ones in their own conda env if they ever conflict with HashBrown's, or just to keep the
+solve fast — the pipeline only needs them on the `PATH`. CheckM2 and BUSCO pull large dependency stacks,
+so this is the recommended way to add them:
+
+```bash
+conda create -n hashbrown-qc -c conda-forge -c bioconda checkm2 busco
+# expose them to HashBrown runs (conda entry points carry their own env in the shebang):
+ln -s "$(conda info --base)/envs/hashbrown-qc/bin/"{checkm2,busco} "$CONDA_PREFIX/bin/"
+```
 
 ## Resuming
 
