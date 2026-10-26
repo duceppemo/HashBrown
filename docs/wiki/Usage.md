@@ -33,7 +33,7 @@ Give long reads (`-l`), short reads (`-s`), or both; the pipeline follows the in
 | `--size` | auto | genome size for Flye; also caps the filtered reads at the best 100x |
 | `--min-size` | Shasta 3000 / Flye auto | minimum read length (Shasta) or minimum overlap (Flye) |
 | `--long-polisher` | `medaka` | `medaka` or `none` |
-| `--model` | `r1041_e82_400bps_sup_g615` | Medaka model; `--list-models` prints the available ones |
+| `--model` | `r1041_e82_400bps_sup_v5.2.0` | Medaka model; match your basecaller (`--list-models`); `r1041_e82_400bps_bacterial_methylation` is ONT's bacteria-specific model |
 | `--short-polisher` | `polypolish+pypolca` | `polypolish+pypolca`, `polypolish`, `pypolca` or `none`, applied in order |
 | `--ion-torrent` | off | the short reads are Ion Torrent data (SPAdes only) |
 | `-t, --threads` | all | total threads |
