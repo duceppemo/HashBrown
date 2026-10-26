@@ -39,5 +39,5 @@ The deepest folder that exists for the sample: `6_polished_short/`, else `4_poli
 
 **How is this different from BGA / BGA_short?**
 One tool, one environment, pluggable polishers, plus the fixes listed in the
-[changelog](https://github.com/duceppemo/HashBrown/blob/master/CHANGELOG.md). The old repositories stay up
+[changelog](https://github.com/duceppemo/HashBrown/blob/main/CHANGELOG.md). The old repositories stay up
 but are superseded.

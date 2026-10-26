@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/duceppemo/HashBrown/master/docs/images/hashbrown_logo.svg" alt="HashBrown: long-read, short-read and hybrid bacterial genome assembly" width="560">
+  <img src="https://raw.githubusercontent.com/duceppemo/HashBrown/main/docs/images/hashbrown_logo.svg" alt="HashBrown: long-read, short-read and hybrid bacterial genome assembly" width="560">
 </p>
 
 HashBrown assembles bacterial genomes from Nanopore long reads, Illumina (or Ion Torrent) short reads, or
@@ -8,7 +8,7 @@ reads into one assembly. It merges and supersedes [BGA](https://github.com/ducep
 [BGA_short](https://github.com/duceppemo/BGA_short).
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/duceppemo/HashBrown/master/docs/images/pipeline.svg" alt="The HashBrown pipeline" width="860">
+  <img src="https://raw.githubusercontent.com/duceppemo/HashBrown/main/docs/images/pipeline.svg" alt="The HashBrown pipeline" width="860">
 </p>
 
 ## The three ways to run it

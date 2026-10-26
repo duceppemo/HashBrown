@@ -16,7 +16,7 @@ defaults follow measurements, not habit:
 Five tracks, every assembly scored by QUAST against a finished genome (mismatches and indels per 100 kbp,
 lower is better). Full tables and runs: `benchmark_results.tsv` under each run folder. Every track is
 scripted and documented in
-[`validation/benchmarks/`](https://github.com/duceppemo/HashBrown/tree/master/validation/benchmarks) —
+[`validation/benchmarks/`](https://github.com/duceppemo/HashBrown/tree/main/validation/benchmarks) —
 data accessions, gold-standard provenance and caveats included — so each result can be reproduced from
 public data (the M. bovis field-strain reads are the one in-house exception).
 
@@ -82,7 +82,7 @@ bash validation/benchmark_polishers.sh data/ results/ 16
 ```
 
 `data/` holds one folder per sample: `reference.fasta` (the gold standard), the Nanopore fastq and the
-Illumina pair — see [`validation/README.md`](https://github.com/duceppemo/HashBrown/blob/master/validation/README.md)
+Illumina pair — see [`validation/README.md`](https://github.com/duceppemo/HashBrown/blob/main/validation/README.md)
 for the exact layout and how to simulate reads (badread + wgsim) when you have no finished genome of your
 own.
 

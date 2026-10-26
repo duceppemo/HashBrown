@@ -26,4 +26,4 @@ pre-commit install
   together with the others, and benchmarked: run `validation/benchmark_polishers.sh` against a gold
   standard and compare the error rates with the current defaults.
 - User-visible changes go in `CHANGELOG.md`; options and outputs are documented in `docs/wiki/`.
-- Open the pull request against `master`.
+- Open the pull request against `main`.

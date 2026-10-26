@@ -8,4 +8,4 @@
 - [FAQ](FAQ)
 - [Development](Development)
 
-[Releases](https://github.com/duceppemo/HashBrown/releases) · [Changelog](https://github.com/duceppemo/HashBrown/blob/master/CHANGELOG.md) · [Issues](https://github.com/duceppemo/HashBrown/issues)
+[Releases](https://github.com/duceppemo/HashBrown/releases) · [Changelog](https://github.com/duceppemo/HashBrown/blob/main/CHANGELOG.md) · [Issues](https://github.com/duceppemo/HashBrown/issues)
