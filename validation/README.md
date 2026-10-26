@@ -5,6 +5,10 @@ rounds) **introduced** errors in low-coverage regions instead of fixing them. Ha
 polishers on the command line (`--long-polisher`, `--short-polisher`) and ships this harness to measure every
 combination against a gold standard, so the defaults are chosen by data, not habit.
 
+The exact scripts, accessions and gold standards behind HashBrown's published results (the wiki's
+Validation page) live in [`benchmarks/`](benchmarks/): six reproducible tracks over two *M. bovis* strains,
+*E. coli* K-12 and two non-model isolates, on Nanopore, PacBio and Illumina.
+
 ## Running the benchmark
 
 ```bash

@@ -14,7 +14,11 @@ defaults follow measurements, not habit:
 ## Benchmark results (2026-10, HashBrown 1.0.0)
 
 Five tracks, every assembly scored by QUAST against a finished genome (mismatches and indels per 100 kbp,
-lower is better). Full tables and runs: `benchmark_results.tsv` under each run folder.
+lower is better). Full tables and runs: `benchmark_results.tsv` under each run folder. Every track is
+scripted and documented in
+[`validation/benchmarks/`](https://github.com/duceppemo/HashBrown/tree/master/validation/benchmarks) —
+data accessions, gold-standard provenance and caveats included — so each result can be reproduced from
+public data (the M. bovis field-strain reads are the one in-house exception).
 
 **Simulated M. bovis AF2122/97** (badread Q20 Nanopore 100x + ART Illumina 60x; exact truth): Flye alone
 left one indel in 4.35 Mb; every polisher combination removed it and none introduced an error. All
