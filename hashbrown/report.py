@@ -146,6 +146,13 @@ class ReportMethods:
         return lengths, quals
 
     @staticmethod
+    def _thousands(*axes):
+        """1,000-style tick labels on the given axes ('x' or 'y' per axis object pair)."""
+        from matplotlib.ticker import StrMethodFormatter
+        for ax, which in axes:
+            getattr(ax, f'{which}axis').set_major_formatter(StrMethodFormatter('{x:,.0f}'))
+
+    @staticmethod
     def _inline_svg(fig):
         """The figure as an SVG string ready to embed in HTML (XML prolog and doctype stripped).
 
@@ -205,6 +212,7 @@ class ReportMethods:
         if shortest > 0 and longest > 20 * shortest:
             ax_len.set_xscale('log')
         ax_q.set_xlabel('Mean read quality (Phred)')
+        ReportMethods._thousands((ax_len, 'x'), (ax_len, 'y'), (ax_q, 'y'))
         for ax in (ax_len, ax_q):
             ReportMethods._style_axes(ax)
         if len(stage_samples) > 1:
@@ -255,6 +263,7 @@ class ReportMethods:
                             fontsize=7, color=FIG_INK, xytext=(5, 5), textcoords='offset points')
         ax.set_xlabel('%GC')
         ax.set_ylabel('Mean coverage (x)')
+        ReportMethods._thousands((ax, 'y'))
         if any(o for o in organisms):
             ReportMethods._style_legend(ax, loc='best')
         ReportMethods._style_axes(ax, grid_axis='both')

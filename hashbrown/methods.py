@@ -155,6 +155,15 @@ class Methods:
                 f.write(f'{name}: {version}\n')
 
     @staticmethod
+    def check_read_file(file_path, filename):
+        """Fail early and clearly on an unreadable input: a broken symlink or an empty file would
+        otherwise ripple through the pipeline as empty intermediate files and a garbage report."""
+        if not os.path.isfile(file_path):
+            raise Exception(f'input file "{filename}" is a broken link or unreadable ({file_path}).')
+        if os.path.getsize(file_path) == 0:
+            raise Exception(f'input file "{filename}" is empty ({file_path}).')
+
+    @staticmethod
     def make_folder(folder):
         # Create parent directories if needed; no error if it already exists
         pathlib.Path(folder).mkdir(parents=True, exist_ok=True)
@@ -175,6 +184,7 @@ class Methods:
                 if not filename.endswith(Methods.accepted_extensions):
                     continue
                 file_path = os.path.realpath(os.path.join(root, filename))  # follow symbolic links
+                Methods.check_read_file(file_path, filename)
                 sample = Methods.get_sample_name(filename)
 
                 if sample in sample_dict:
@@ -205,6 +215,7 @@ class Methods:
                 if not filename.endswith(Methods.accepted_extensions):
                     continue
                 file_path = os.path.realpath(os.path.join(root, filename))
+                Methods.check_read_file(file_path, filename)
                 sample = Methods.get_sample_name(filename)
 
                 if sample not in sample_dict:

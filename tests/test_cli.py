@@ -49,11 +49,12 @@ def test_default_assembler_follows_the_inputs():
     assert cli.parse_arguments(['-l', 'long', '-s', 'short', '-o', 'out', '--ion-torrent']).ion_torrent
 
 
-def test_read_prep_defaults_on():
+def test_read_prep_defaults():
     args = cli.parse_arguments(['-l', 'long', '-s', 'short', '-o', 'out'])
-    assert args.trim_long and args.filter_long and args.trim_short
-    args = cli.parse_arguments(['-l', 'long', '-o', 'out', '--no-trim-long', '--no-filter-long'])
-    assert not args.trim_long and not args.filter_long
+    assert not args.trim_long  # Porechop is opt-in: unmaintained, slow, redundant on recent basecalls
+    assert args.filter_long and args.trim_short
+    args = cli.parse_arguments(['-l', 'long', '-o', 'out', '--trim-long', '--no-filter-long'])
+    assert args.trim_long and not args.filter_long
     # short-only runs ignore the long-read prep steps instead of erroring
     args = cli.parse_arguments(['-s', 'short', '-o', 'out'])
     assert not args.trim_long and not args.filter_long and args.trim_short

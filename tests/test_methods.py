@@ -21,12 +21,12 @@ def test_check_input_folder(tmp_path):
     with pytest.raises(Exception, match='No sequence file'):
         Methods.check_input_folder(str(empty))
 
-    (empty / 'reads.fastq.gz').write_bytes(b'')
+    (empty / 'reads.fastq.gz').write_bytes(b'@r\nACGT\n+\nIIII\n')
     Methods.check_input_folder(str(empty))  # no exception
 
     nested = tmp_path / 'nested'
     (nested / 'sub').mkdir(parents=True)
-    (nested / 'sub' / 'reads.fq').write_text('')
+    (nested / 'sub' / 'reads.fq').write_text('@r\nACGT\n+\nIIII\n')
     Methods.check_input_folder(str(nested))  # found recursively
 
 
@@ -50,8 +50,8 @@ def test_check_mem_clamps_invalid_values():
 def test_get_nanopore_files(tmp_path, capsys):
     folder = tmp_path / 'reads'
     folder.mkdir()
-    (folder / 'sample1.fastq.gz').write_bytes(b'')
-    (folder / 'sample2_pass.fq').write_text('')
+    (folder / 'sample1.fastq.gz').write_bytes(b'@r\nACGT\n+\nIIII\n')
+    (folder / 'sample2_pass.fq').write_text('@r\nACGT\n+\nIIII\n')
     (folder / 'notes.txt').write_text('ignored')
 
     sample_dict = Methods.get_nanopore_files(str(folder))
@@ -59,7 +59,7 @@ def test_get_nanopore_files(tmp_path, capsys):
     assert sample_dict['sample1'].nanopore.raw.endswith('sample1.fastq.gz')
 
     # A second file for the same sample is reported and ignored
-    (folder / 'sample1_bis.fastq').write_text('')
+    (folder / 'sample1_bis.fastq').write_text('@r\nACGT\n+\nIIII\n')
     sample_dict = Methods.get_nanopore_files(str(folder))
     assert sample_dict['sample1'].nanopore.raw.endswith('sample1.fastq.gz')
     assert 'More than one long-read file' in capsys.readouterr().err
@@ -73,13 +73,13 @@ def test_get_nanopore_files(tmp_path, capsys):
 def test_get_illumina_files_hybrid(tmp_path, capsys):
     long_folder = tmp_path / 'long'
     long_folder.mkdir()
-    (long_folder / 'sample1.fastq.gz').write_bytes(b'')
+    (long_folder / 'sample1.fastq.gz').write_bytes(b'@r\nACGT\n+\nIIII\n')
     short_folder = tmp_path / 'short'
     short_folder.mkdir()
-    (short_folder / 'sample1_R1.fastq.gz').write_bytes(b'')
-    (short_folder / 'sample1_R2.fastq.gz').write_bytes(b'')
-    (short_folder / 'orphan_R1.fastq.gz').write_bytes(b'')  # no matching long reads
-    (short_folder / 'sample1.fastq.gz').write_bytes(b'')  # a stray third file: the pair wins
+    (short_folder / 'sample1_R1.fastq.gz').write_bytes(b'@r\nACGT\n+\nIIII\n')
+    (short_folder / 'sample1_R2.fastq.gz').write_bytes(b'@r\nACGT\n+\nIIII\n')
+    (short_folder / 'orphan_R1.fastq.gz').write_bytes(b'@r\nACGT\n+\nIIII\n')  # no matching long reads
+    (short_folder / 'sample1.fastq.gz').write_bytes(b'@r\nACGT\n+\nIIII\n')  # a stray third file: the pair wins
 
     sample_dict = Methods.get_nanopore_files(str(long_folder))
     sample_dict = Methods.get_illumina_files(str(short_folder), sample_dict)
@@ -96,10 +96,10 @@ def test_get_illumina_files_hybrid_single_end(tmp_path):
     """A single-end short-read file (e.g. Ion Torrent) is attached to its long-read sample."""
     long_folder = tmp_path / 'long'
     long_folder.mkdir()
-    (long_folder / 'sample1.fastq.gz').write_bytes(b'')
+    (long_folder / 'sample1.fastq.gz').write_bytes(b'@r\nACGT\n+\nIIII\n')
     short_folder = tmp_path / 'short'
     short_folder.mkdir()
-    (short_folder / 'sample1.fastq.gz').write_bytes(b'')
+    (short_folder / 'sample1.fastq.gz').write_bytes(b'@r\nACGT\n+\nIIII\n')
 
     sample_dict = Methods.get_nanopore_files(str(long_folder))
     sample_dict = Methods.get_illumina_files(str(short_folder), sample_dict)
@@ -110,9 +110,9 @@ def test_get_illumina_files_hybrid_single_end(tmp_path):
 def test_get_illumina_files_standalone(tmp_path):
     short_folder = tmp_path / 'short'
     short_folder.mkdir()
-    (short_folder / 'pe_R1.fastq.gz').write_bytes(b'')
-    (short_folder / 'pe_R2.fastq.gz').write_bytes(b'')
-    (short_folder / 'se.fastq.gz').write_bytes(b'')
+    (short_folder / 'pe_R1.fastq.gz').write_bytes(b'@r\nACGT\n+\nIIII\n')
+    (short_folder / 'pe_R2.fastq.gz').write_bytes(b'@r\nACGT\n+\nIIII\n')
+    (short_folder / 'se.fastq.gz').write_bytes(b'@r\nACGT\n+\nIIII\n')
 
     sample_dict = Methods.get_illumina_files(str(short_folder), dict(), require_long_reads=False)
     assert sorted(sample_dict) == ['pe', 'se']
@@ -181,3 +181,15 @@ def test_fasta_length(tmp_path):
     with gzip.open(gz, 'wt') as f:
         f.write('>c1\nACGTACGT\n')
     assert AssemblyQcMethods.fasta_length(str(gz)) == 8
+
+
+def test_broken_or_empty_inputs_fail_early(tmp_path):
+    folder = tmp_path / 'reads'
+    folder.mkdir()
+    (folder / 'empty.fastq.gz').write_bytes(b'')
+    with pytest.raises(Exception, match='empty'):
+        Methods.get_nanopore_files(str(folder))
+    (folder / 'empty.fastq.gz').unlink()
+    (folder / 'dangling.fastq.gz').symlink_to(tmp_path / 'nowhere.fastq.gz')
+    with pytest.raises(Exception, match='broken link'):
+        Methods.get_nanopore_files(str(folder))

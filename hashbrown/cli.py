@@ -55,9 +55,11 @@ def parse_arguments(argv=None):
                         type=int,
                         help='Override the automatically detected genome size for Flye. Also used by the '
                              'long read filtering step to keep the best 100x, when coverage allows.')
-    parser.add_argument('--no-trim-long',
-                        dest='trim_long', action='store_false',
-                        help='Skip the long-read adapter trimming (Porechop), which is on by default.')
+    parser.add_argument('--trim-long',
+                        action='store_true',
+                        help='Trim long-read adapters and split chimeras with Porechop. Off by default: '
+                             'recent basecallers already trim adapters and Porechop is unmaintained and '
+                             'slow — use it for older (pre-Dorado) reads.')
     parser.add_argument('--no-filter-long',
                         dest='filter_long', action='store_false',
                         help='Skip the long-read filtering (Filtlong, drops the worst 5%% and reads '
@@ -65,11 +67,11 @@ def parse_arguments(argv=None):
     parser.add_argument('--no-trim-short',
                         dest='trim_short', action='store_false',
                         help='Skip the short-read trimming (fastp), which is on by default.')
-    # The old opt-in spellings stay accepted (and now redundant), so existing commands keep working
-    parser.add_argument('--trim-long', action='store_true', help=SUPPRESS)
+    # Older spellings stay accepted as no-ops, so existing commands keep working
+    parser.add_argument('--no-trim-long', dest='trim_long', action='store_false', help=SUPPRESS)
     parser.add_argument('--filter-long', action='store_true', help=SUPPRESS)
     parser.add_argument('--trim-short', action='store_true', help=SUPPRESS)
-    parser.set_defaults(trim_long=True, filter_long=True, trim_short=True)
+    parser.set_defaults(trim_long=False, filter_long=True, trim_short=True)
     parser.add_argument('--long-polisher',
                         choices=['medaka', 'none'], default='medaka',
                         help='Long read polisher for the long read assembly. Default is "medaka". '
@@ -215,6 +217,14 @@ class HashBrown:
             self.run_long()
         else:
             self.run_short()
+
+        # Loud exit: a run where nothing assembled must not look like a success
+        failed = [sample for sample, sample_obj in self.sample_dict.items()
+                  if not (sample_obj.best_assembly() and os.path.exists(sample_obj.best_assembly()))]
+        if failed:
+            print('WARNING: no final assembly for: {} - see the messages above.'.format(', '.join(failed)))
+        if failed and len(failed) == len(self.sample_dict):
+            raise Exception('no sample produced an assembly.')
         print('Done!')
 
     def run_long(self):

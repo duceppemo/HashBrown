@@ -58,6 +58,9 @@ class NanoporeMethods:
                     for sample, sample_obj in sample_dict.items())
             for sample, trimmed in executor.map(lambda x: NanoporeMethods.run_porechop(*x), args):
                 sample_dict[sample].nanopore.trimmed = trimmed
+                if not trimmed and not os.path.exists(flag):
+                    print(f'\tWARNING: Porechop produced nothing for {sample}; '
+                          'continuing with the untrimmed reads.')
 
         if os.path.exists(flag):
             print('\tSkipping trimming long reads. Already done.')
@@ -83,7 +86,12 @@ class NanoporeMethods:
             with gzip.open(filtered_fastq, 'wb') as f:
                 f.write(p.communicate()[0])
 
-        if not os.path.exists(filtered_fastq):
+        if os.path.exists(filtered_fastq):
+            with gzip.open(filtered_fastq, 'rb') as f:
+                if not f.read(1):  # filtlong failed silently: an empty file helps nobody
+                    os.remove(filtered_fastq)
+                    filtered_fastq = ''
+        else:
             filtered_fastq = ''
 
         return sample, filtered_fastq
@@ -97,6 +105,9 @@ class NanoporeMethods:
                     for sample, sample_obj in sample_dict.items())
             for sample, filtered in executor.map(lambda x: NanoporeMethods.run_filtlong(*x), args):
                 sample_dict[sample].nanopore.filtered = filtered
+                if not filtered and not os.path.exists(flag):
+                    print(f'\tWARNING: Filtlong produced nothing for {sample}; '
+                          'continuing with the unfiltered reads.')
 
         if os.path.exists(flag):
             print('\tSkipping filtering long reads. Already done.')

@@ -3,11 +3,15 @@
 ## Unreleased
 
 ### Changed
-- **Read preparation is now on by default**: Porechop long-read trimming, Filtlong filtering and fastp
-  short-read trimming all run unless skipped with the new `--no-trim-long`, `--no-filter-long` and
-  `--no-trim-short` flags (the old opt-in spellings remain accepted no-ops). Short-read-only runs ignore
-  the long-read prep steps instead of erroring. The benchmark scripts pin `--no-*` to keep the published
-  validation numbers reproducible.
+- **Filtlong filtering and fastp trimming are now on by default** (skip with `--no-filter-long` /
+  `--no-trim-short`; the old opt-in spellings remain accepted no-ops). Porechop (`--trim-long`) stays
+  opt-in: it is unmaintained, slow, and redundant on recent basecalls. Short-read-only runs ignore the
+  long-read prep flags instead of erroring, and the benchmark scripts pin the prep flags to keep the
+  published validation numbers reproducible.
+- **Unusable inputs fail loudly**: an empty input file or broken symlink stops the run immediately with a
+  clear message; a prep stage that produces nothing warns and falls back to the previous reads; and a run
+  where no sample assembled exits non-zero instead of printing Done. Read QC figures use 1,000-style
+  thousands separators on their axes.
 - **Mapping QC covers every read-processing stage**: flagstat and mosdepth now run per stage (raw,
   trimmed, filtered) instead of only on the most processed reads, so the effect of each step on mapping
   rate and depth is measurable; `long/short_read_cov.tsv` gained a `Stage` column.

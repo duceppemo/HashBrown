@@ -107,8 +107,8 @@ def test_hybrid_pipeline(stub_bin, fastq_gz, tmp_path):
     run(['-l', str(long_dir), '-s', str(short_dir), '-o', str(out),
          '--trim-short', '-t', '2', '-p', '1'])
     assert (out / '3_assembled_long' / 'sample1.fasta').read_text() == '>contig_1\nACGT\n'
-    # one row per stage (raw/trimmed/filtered with the on-by-default prep), not duplicated by the resume
-    assert (qc / 'mapping_qc_long_reads' / 'long_read_cov.tsv').read_text().count('sample1') == 3
+    # one row per stage (raw + the default filtering), not duplicated by the resume
+    assert (qc / 'mapping_qc_long_reads' / 'long_read_cov.tsv').read_text().count('sample1') == 2
     assert 'sample1' in (out / 'flye_stats.tsv').read_text()  # the stats table was not clobbered
 
 
