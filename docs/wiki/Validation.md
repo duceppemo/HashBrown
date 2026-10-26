@@ -13,7 +13,7 @@ defaults follow measurements, not habit:
 
 ## Benchmark results (2026-10, HashBrown 1.0.0)
 
-Six tracks, every assembly scored by QUAST against a finished genome (mismatches and indels per 100 kbp,
+Seven tracks, every assembly scored by QUAST against a finished genome (mismatches and indels per 100 kbp,
 lower is better). Full tables and runs: `benchmark_results.tsv` under each run folder. Every track is
 scripted and documented in
 [`validation/benchmarks/`](https://github.com/duceppemo/HashBrown/tree/main/validation/benchmarks) —
@@ -84,6 +84,29 @@ short-read polishing made it marginally worse (+1 mismatch, +2 indels) because t
 from a different lab stock. Polishing an already-excellent assembly with reads from a different culture
 moves it toward that culture.
 
+**Ion Torrent as the polishing reads** — *Scandinavium goeteborgense* CCUG 66741 (type strain) and
+*Vibrio* sp. ED-400, each sequenced on ONT + Ion Torrent PGM + Illumina from one DNA submission
+(`validation/benchmarks/iontorrent_polish_benchmark.sh`). A deliberately rough 50x R9.4.1 Flye base was
+polished with nothing, with the Ion reads, or with depth-matched Illumina, against a truth built from
+the deep ONT + full Illumina run. Every residual indel was classified by homopolymer context:
+
+| Sample | Arm | Mism./100kbp | Indels/100kbp | Indels left | in homopolymers |
+| --- | --- | --- | --- | --- | --- |
+| *S. goeteborgense* | none | 4.52 | 141.05 | 6,999 | 97% |
+| *S. goeteborgense* | **Ion PGM** | 0.19 | 12.34 | **506** | **96%** |
+| *S. goeteborgense* | Illumina | 0.13 | 0.81 | 0 | — |
+| *Vibrio* ED-400 | none | 9.41 | 118.02 | 6,815 | 92% |
+| *Vibrio* ED-400 | **Ion PGM** | 1.26 | 13.68 | **662** | **97%** |
+| *Vibrio* ED-400 | Illumina | 1.06 | 1.68 | 0 | — |
+
+Ion polishing removed ~92% of the indels and nearly all mismatches, and never hurt — but the errors it
+cannot finish are almost entirely (96–97%) homopolymer indels, the error mode it shares with Nanopore,
+exactly where depth-matched Illumina goes to ~zero. Hence the `--ion-torrent` warning: an Ion-polished
+Nanopore assembly still carries homopolymer indels (frameshift-sensitive analyses beware); finish with
+Illumina. Caveats: the truth is Illumina-polished (favoring the Illumina arm's absolute numbers — the
+homopolymer concentration of the Ion residue is the construction-independent readout), and the Vibrio
+arms share 3 base-assembly structural differences from the truth, constant across arms.
+
 ### What the defaults follow from this
 
 - **Hybrid Nanopore + Illumina**: keep `--long-polisher medaka --short-polisher polypolish+pypolca`
@@ -96,6 +119,8 @@ moves it toward that culture.
 - **Non-Nanopore long reads** (PacBio): always `--long-polisher none`.
 - Polish with reads **from the same culture** as the assembly; reads from a different stock of the same
   strain introduce that stock's variants.
+- **Ion Torrent reads are not a finishing polisher** for Nanopore assemblies: they fix most errors but
+  leave the shared homopolymer indels (96–97% of their residue) — use Illumina to finish.
 
 ## Running the benchmark
 

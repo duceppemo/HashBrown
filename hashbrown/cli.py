@@ -207,8 +207,9 @@ class HashBrown:
 
         if self.ion_torrent and self.long_reads and self.short_polishers:
             print('\tWARNING: polishing Nanopore assemblies with Ion Torrent reads is not recommended -'
-                  '\n\t         both platforms make the same homopolymer/indel errors, so the polish can'
-                  '\n\t         confirm errors instead of fixing them. Consider --short-polisher none.')
+                  '\n\t         both platforms share the homopolymer error mode. In our benchmark it fixed'
+                  '\n\t         ~92% of the indels but 96-97% of what it left behind were homopolymer'
+                  '\n\t         indels (frameshift-sensitive analyses beware). Finish with Illumina.')
         print('\tAll good!')
 
     def run(self):

@@ -26,6 +26,9 @@
   than fix them (`--short-polisher none` is suggested).
 
 ### Added
+- **Ion Torrent polishing benchmark** (seventh validation track, two 3-platform isolates): Ion polishing
+  of a Nanopore assembly fixes ~92% of indels but 96–97% of its residual errors are homopolymer indels,
+  where depth-matched Illumina leaves none — the `--ion-torrent` warning now cites the measurement.
 - **QA-grade report design**: branded masthead (logo + version), summary verdict cards, a QC criteria
   table with pass/warn/fail chips anchored on the MIMAG standard (Bowers et al. 2017) and an overall
   draft-quality tier, a traceability appendix (software versions from log.txt, exact command line, run

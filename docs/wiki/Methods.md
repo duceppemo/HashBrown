@@ -28,8 +28,9 @@ What each step runs, with the exact settings that are not defaults.
    our tests. This pair was chosen because neither introduces errors in low-coverage regions —
    NextPolish, ntEdit and plain POLCA did, and were dropped. The final contigs are renamed `contig_1`,
    `contig_2`, … **Polish only with Illumina reads**: Ion Torrent reads share Nanopore's
-   homopolymer/indel error mode, so they can confirm those errors instead of fixing them — with
-   `--ion-torrent` HashBrown warns and suggests `--short-polisher none`.
+   homopolymer error mode — in our [benchmark](Validation) they fixed ~92% of the indels but 96–97% of
+   what they left behind were homopolymer indels, where depth-matched Illumina left none. With
+   `--ion-torrent` HashBrown warns accordingly.
 
 ## Short reads only
 
