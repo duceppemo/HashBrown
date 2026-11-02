@@ -1,12 +1,13 @@
 <p align="center">
-  <img src="docs/images/hashbrown_logo.svg" alt="HashBrown: long-read, short-read and hybrid bacterial genome assembly" width="560">
+  <img src="https://raw.githubusercontent.com/duceppemo/HashBrown/main/docs/images/hashbrown_logo.svg" alt="HashBrown: long-read, short-read and hybrid bacterial genome assembly" width="560">
 </p>
 
 <p align="center">
   <a href="https://github.com/duceppemo/HashBrown/actions/workflows/ci.yml"><img src="https://github.com/duceppemo/HashBrown/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://codecov.io/gh/duceppemo/HashBrown"><img src="https://codecov.io/gh/duceppemo/HashBrown/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://pypi.org/project/hashbrown-assembly/"><img src="https://img.shields.io/pypi/v/hashbrown-assembly" alt="PyPI"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/duceppemo/HashBrown" alt="License: MIT"></a>
+  <a href="https://github.com/duceppemo/HashBrown/blob/main/LICENSE"><img src="https://img.shields.io/github/license/duceppemo/HashBrown" alt="License: MIT"></a>
   <a href="https://github.com/duceppemo/HashBrown/wiki"><img src="https://img.shields.io/badge/docs-wiki-informational" alt="Documentation"></a>
 </p>
 
@@ -27,7 +28,7 @@ It merges and supersedes [BGA](https://github.com/duceppemo/BGA) and
 conflicted with the short-read tools; one conda environment now covers everything.
 
 <p align="center">
-  <img src="docs/images/pipeline.svg" alt="Long reads: prepare (Porechop, Filtlong), assemble (Flye or Shasta), polish (Medaka), then polish with short reads (Polypolish, pyPOLCA). Short reads alone: trim (fastp), assemble (SKESA or SPAdes). Both are optionally reoriented (dnaapler), end in QC (QUAST, flagstat, mosdepth, dot plots, graphs) and a per-sample HTML + PDF report." width="690">
+  <img src="https://raw.githubusercontent.com/duceppemo/HashBrown/main/docs/images/pipeline.svg" alt="Long reads: prepare (Porechop, Filtlong), assemble (Flye or Shasta), polish (Medaka), then polish with short reads (Polypolish, pyPOLCA). Short reads alone: trim (fastp), assemble (SKESA or SPAdes). Both are optionally reoriented (dnaapler), end in QC (QUAST, flagstat, mosdepth, dot plots, graphs) and a per-sample HTML + PDF report." width="690">
 </p>
 
 ## Quick start
