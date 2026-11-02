@@ -48,6 +48,9 @@ hashbrown -l nanopore_fastq/ -s illumina_fastq/ -o results/
 hashbrown -s illumina_fastq/ -o results/ -a skesa
 ```
 
+The package is also on PyPI as [`hashbrown-assembly`](https://pypi.org/project/hashbrown-assembly/)
+(`pip install hashbrown-assembly`); the conda environment still provides the bioinformatics programs.
+
 Each long-read fastq file is one sample. Short-read files pair on `_R1`/`_R2` in the name; a file without
 either is a single-end sample. The sample name is everything before the first underscore, and in hybrid
 mode the long- and short-read names must match. Rerunning the same command resumes where it stopped.

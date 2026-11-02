@@ -19,6 +19,16 @@ hashbrown --version
 you can trim it down to `skesa`/`spades`, `fastp`, `samtools`, `minimap2`, `quast`, `mosdepth` and
 `bandage`.
 
+## From PyPI
+
+The package itself is on PyPI as
+[`hashbrown-assembly`](https://pypi.org/project/hashbrown-assembly/), so once an environment with the
+programs is active you can skip the clone:
+
+```bash
+pip install hashbrown-assembly
+```
+
 ## Without installing
 
 From a clone with the environment active, `python hashbrown.py …` behaves exactly like the `hashbrown`
