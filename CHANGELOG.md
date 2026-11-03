@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.1 (2026-11-03)
+
+Documentation and packaging release; no pipeline changes.
+
+- **HashBrown is on [bioconda](https://anaconda.org/bioconda/hashbrown)**:
+  `conda create -n hashbrown -c conda-forge -c bioconda hashbrown` installs the tool with its whole core
+  toolchain and is now the recommended install (README and wiki updated, bioconda badge added).
+- The Python package is on PyPI as
+  [`hashbrown-assembly`](https://pypi.org/project/hashbrown-assembly/), published automatically on each
+  release via PyPI trusted publishing (`.github/workflows/publish.yml`).
+- The polisher-benchmark result tables (all seven tracks, re-measured with 1.1.0) are committed under
+  `validation/benchmarks/results/` and linked from the wiki's Validation page.
+- README images and the license link use absolute URLs so the PyPI project page renders them.
+
 ## 1.1.0 (2026-10-26)
 
 ### Fixed (pre-release review)
