@@ -1,0 +1,5 @@
+Sample	LongPolisher	ShortPolisher	MismatchesPer100kbp	IndelsPer100kbp	Misassemblies	NGA50	TotalLength	Contigs
+Linnocua	medaka_bacterial	none	0.00	0.00	0	2883001	2972545	2
+Linnocua	medaka_bacterial	polypolish+pypolca	0.00	0.00	0	2883001	2972545	2
+Prettgeri	medaka_bacterial	none	0.02	0.02	0	4318566	4465805	2
+Prettgeri	medaka_bacterial	polypolish+pypolca	0.00	0.00	0	4318567	4465806	2

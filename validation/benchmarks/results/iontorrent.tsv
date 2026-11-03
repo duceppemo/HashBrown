@@ -1,0 +1,7 @@
+Sample	Arm	MismatchesPer100kbp	IndelsPer100kbp	Indels	HomopolymerIndels	Misassemblies
+Sgoete	none	4.52	141.07	7026	6821	0
+Sgoete	ion	0.19	12.36	533	488	0
+Sgoete	illumina	0.13	0.83	27	0	0
+VibED400	none	9.43	117.76	6808	6283	3
+VibED400	ion	1.15	13.65	655	644	3
+VibED400	illumina	0.99	1.18	0	0	3

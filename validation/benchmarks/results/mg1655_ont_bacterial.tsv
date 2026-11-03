@@ -1,0 +1,3 @@
+Sample	LongPolisher	ShortPolisher	MismatchesPer100kbp	IndelsPer100kbp	Misassemblies	NGA50	TotalLength	Contigs
+MG1655	medaka_bacterial	none	0.04	0.13	3	3960958	4640169	1
+MG1655	medaka_bacterial	polypolish+pypolca	0.04	0.13	3	3960958	4640169	1

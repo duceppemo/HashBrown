@@ -1,0 +1,9 @@
+Sample	LongPolisher	ShortPolisher	MismatchesPer100kbp	IndelsPer100kbp	Misassemblies	NGA50	TotalLength	Contigs
+AF2122	none	none	54.82	544.92	827	13267	11539326	660
+AF2122	none	polypolish	46.41	378.32	830	13374	11535242	659
+AF2122	none	pypolca	54.49	538.40	827	13267	11539208	660
+AF2122	none	polypolish+pypolca	46.28	376.65	830	13374	11535174	659
+AF2122	medaka	none	111.00	671.64	791	13262	11545921	660
+AF2122	medaka	polypolish	89.92	444.72	799	13252	11540518	659
+AF2122	medaka	pypolca	110.78	663.01	792	13262	11545356	660
+AF2122	medaka	polypolish+pypolca	90.00	443.77	800	13252	11540245	659

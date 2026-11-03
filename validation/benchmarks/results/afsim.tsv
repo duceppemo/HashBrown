@@ -1,0 +1,9 @@
+Sample	LongPolisher	ShortPolisher	MismatchesPer100kbp	IndelsPer100kbp	Misassemblies	NGA50	TotalLength	Contigs
+AFsim	none	none	0.00	0.02	0	4349903	4349921	1
+AFsim	none	polypolish	0.00	0.00	0	4349904	4349922	1
+AFsim	none	pypolca	0.00	0.00	0	4349904	4349922	1
+AFsim	none	polypolish+pypolca	0.00	0.00	0	4349904	4349922	1
+AFsim	medaka	none	0.00	0.00	0	4349904	4349922	1
+AFsim	medaka	polypolish	0.00	0.00	0	4349904	4349922	1
+AFsim	medaka	pypolca	0.00	0.00	0	4349904	4349922	1
+AFsim	medaka	polypolish+pypolca	0.00	0.00	0	4349904	4349922	1

@@ -1,0 +1,9 @@
+Sample	LongPolisher	ShortPolisher	MismatchesPer100kbp	IndelsPer100kbp	Misassemblies	NGA50	TotalLength	Contigs
+MG1655pb	none	none	0.02	0.09	4	3976497	4642499	1
+MG1655pb	none	polypolish	0.04	0.13	4	3976496	4642498	1
+MG1655pb	none	pypolca	0.04	0.13	4	3976496	4642498	1
+MG1655pb	none	polypolish+pypolca	0.04	0.13	4	3976496	4642498	1
+MG1655pb	medaka	none	0.02	0.09	4	3976497	4642499	1
+MG1655pb	medaka	polypolish	0.04	0.13	4	3976496	4642498	1
+MG1655pb	medaka	pypolca	0.04	0.13	4	3976496	4642498	1
+MG1655pb	medaka	polypolish+pypolca	0.04	0.13	4	3976496	4642498	1

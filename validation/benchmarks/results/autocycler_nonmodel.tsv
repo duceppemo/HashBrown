@@ -1,0 +1,17 @@
+Sample	LongPolisher	ShortPolisher	MismatchesPer100kbp	IndelsPer100kbp	Misassemblies	NGA50	TotalLength	Contigs
+Linnocua	none	none	0.00	0.03	0	2883000	2972544	2
+Linnocua	none	polypolish	0.00	0.00	0	2883001	2972545	2
+Linnocua	none	pypolca	0.00	0.00	0	2883001	2972545	2
+Linnocua	none	polypolish+pypolca	0.00	0.00	0	2883001	2972545	2
+Linnocua	medaka	none	0.00	0.00	0	2883001	2972545	2
+Linnocua	medaka	polypolish	0.00	0.00	0	2883001	2972545	2
+Linnocua	medaka	pypolca	0.00	0.00	0	2883001	2972545	2
+Linnocua	medaka	polypolish+pypolca	0.00	0.00	0	2883001	2972545	2
+Prettgeri	none	none	0.04	0.11	0	4318564	4465803	2
+Prettgeri	none	polypolish	0.00	0.02	0	4318566	4465805	2
+Prettgeri	none	pypolca	0.00	0.00	0	4318567	4465806	2
+Prettgeri	none	polypolish+pypolca	0.00	0.00	0	4318567	4465806	2
+Prettgeri	medaka	none	0.02	0.02	0	4318566	4465805	2
+Prettgeri	medaka	polypolish	0.00	0.02	0	4318566	4465805	2
+Prettgeri	medaka	pypolca	0.00	0.00	0	4318567	4465806	2
+Prettgeri	medaka	polypolish+pypolca	0.00	0.00	0	4318567	4465806	2

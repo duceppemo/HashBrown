@@ -11,10 +11,12 @@ defaults follow measurements, not habit:
   that introduced no errors in earlier tests (Polypolish and pyPOLCA `--careful` are both designed to
   leave low-confidence regions alone).
 
-## Benchmark results (2026-10, HashBrown 1.0.0)
+## Benchmark results (2026-10, re-measured 2026-11 with HashBrown 1.1.0)
 
 Seven tracks, every assembly scored by QUAST against a finished genome (mismatches and indels per 100 kbp,
-lower is better). Full tables and runs: `benchmark_results.tsv` under each run folder. Every track is
+lower is better). The full per-arm tables are committed in
+[`validation/benchmarks/results/`](https://github.com/duceppemo/HashBrown/tree/main/validation/benchmarks/results).
+Every track is
 scripted and documented in
 [`validation/benchmarks/`](https://github.com/duceppemo/HashBrown/tree/main/validation/benchmarks) —
 data accessions, gold-standard provenance and caveats included — so each result can be reproduced from
@@ -35,12 +37,12 @@ is a constant offset, so only the differences between arms count):
 
 | Long polisher | Mismatches/100kbp | Indels/100kbp |
 | --- | --- | --- |
-| none | 19.12 | 5.42 |
-| medaka, matched sup model | 19.10 | 5.26 |
+| none | 19.12 | 5.45 |
+| medaka, matched sup model | 19.10 | 5.22 |
 | medaka, bacterial model | 19.10 | **4.64** |
 
 Medaka never hurt, and **ONT's bacterial methylation model removed 3x more indels than the matched sup
-model** (~34 vs ~7 genome-wide). It is HashBrown's default model since this benchmark.
+model** (~35 vs ~10 genome-wide). It is HashBrown's default model since this benchmark.
 
 **Non-model organisms** — *Listeria innocua* AUSMDU00097349 (Bacillota) and *Providencia rettgeri*
 AUSMDU00026122 (Morganellaceae), real R10.4.1 sup v5.0.0 at 100x + Illumina, truth = the same isolates'
@@ -53,13 +55,13 @@ model organisms it may have been trained on — it does not:
 | *L. innocua* | none + none | 0.00 | 0.03 |
 | *L. innocua* | any polisher combination | **0.00** | **0.00** |
 | *P. rettgeri* | none + none | 0.04 | 0.11 |
-| *P. rettgeri* | medaka (matched sup) + none | 0.04 | 0.02 |
+| *P. rettgeri* | medaka (matched sup) + none | 0.02 | 0.02 |
 | *P. rettgeri* | medaka (bacterial) + none | **0.02** | **0.02** |
 | *P. rettgeri* | anything + polypolish+pypolca | **0.00** | **0.00** |
 
 With modern sup v5 basecalls at 100x the raw Flye assemblies start within a handful of errors of perfect;
-every polisher helps or is neutral, the bacterial model is equal (*L. innocua*) or better
-(*P. rettgeri*) than the matched sup model on organisms far from *E. coli*, and the defaults end both
+every polisher helps or is neutral, the bacterial model equals the matched sup model on organisms far
+from *E. coli* (its clear win is on the older sup v4.3 *M. bovis* track above), and the defaults end both
 genomes **error-free against the truth**. Caveat: the references were themselves polished with
 Medaka + Polypolish + pyPOLCA, so a blind spot shared by those tools cannot be excluded.
 The track is fully scripted: `validation/benchmarks/autocycler_nonmodel_benchmark.sh`.
@@ -69,11 +71,11 @@ deliberately rough — a stress test):
 
 | Combination | Mismatches/100kbp | Indels/100kbp |
 | --- | --- | --- |
-| none + none | 52 | 516 |
-| none + polypolish | 45 | 362 |
-| none + pypolca | 52 | 511 |
-| none + polypolish→pypolca | **45** | **361** |
-| medaka + none | 100 | 594 |
+| none + none | 55 | 545 |
+| none + polypolish | 46 | 378 |
+| none + pypolca | 54 | 538 |
+| none + polypolish→pypolca | **46** | **377** |
+| medaka + none | 111 | 672 |
 
 Polypolish does the heavy lifting and never hurts; pyPOLCA `--careful` alone declines to fix a bad
 assembly (by design) but adds a small gain after Polypolish. **Medaka on PacBio reads doubles the
@@ -92,15 +94,15 @@ the deep ONT + full Illumina run. Every residual indel was classified by homopol
 
 | Sample | Arm | Mism./100kbp | Indels/100kbp | Indels left | in homopolymers |
 | --- | --- | --- | --- | --- | --- |
-| *S. goeteborgense* | none | 4.52 | 141.05 | 6,999 | 97% |
-| *S. goeteborgense* | **Ion PGM** | 0.19 | 12.34 | **506** | **96%** |
-| *S. goeteborgense* | Illumina | 0.13 | 0.81 | 0 | — |
-| *Vibrio* ED-400 | none | 9.41 | 118.02 | 6,815 | 92% |
-| *Vibrio* ED-400 | **Ion PGM** | 1.26 | 13.68 | **662** | **97%** |
-| *Vibrio* ED-400 | Illumina | 1.06 | 1.68 | 0 | — |
+| *S. goeteborgense* | none | 4.52 | 141.07 | 7,026 | 97% |
+| *S. goeteborgense* | **Ion PGM** | 0.19 | 12.36 | **533** | **92%** |
+| *S. goeteborgense* | Illumina | 0.13 | 0.83 | 27 | 0% |
+| *Vibrio* ED-400 | none | 9.43 | 117.76 | 6,808 | 92% |
+| *Vibrio* ED-400 | **Ion PGM** | 1.15 | 13.65 | **655** | **98%** |
+| *Vibrio* ED-400 | Illumina | 0.99 | 1.18 | 0 | — |
 
-Ion polishing removed ~92% of the indels and nearly all mismatches, and never hurt — but the errors it
-cannot finish are almost entirely (96–97%) homopolymer indels, the error mode it shares with Nanopore,
+Ion polishing removed ~91% of the indels and nearly all mismatches, and never hurt — but the errors it
+cannot finish are almost entirely (92–98%) homopolymer indels, the error mode it shares with Nanopore,
 exactly where depth-matched Illumina goes to ~zero. Hence the `--ion-torrent` warning: an Ion-polished
 Nanopore assembly still carries homopolymer indels (frameshift-sensitive analyses beware); finish with
 Illumina. Caveats: the truth is Illumina-polished (favoring the Illumina arm's absolute numbers — the
@@ -115,12 +117,12 @@ arms share 3 base-assembly structural differences from the truth, constant acros
   R10.4.1; it beat or equalled the matched sup model everywhere — including on the non-model organisms
   (*M. bovis*, *L. innocua*, *P. rettgeri*), so the gain is not model-organism overfitting.
 - **Recent sup basecalls at ≥100x**: `--long-polisher none` is acceptable — the assembler is already at
-  the error floor — but medaka costs little and still helps older basecalls (sup v4.3: −34 indels).
+  the error floor — but medaka costs little and still helps older basecalls (sup v4.3: −35 indels).
 - **Non-Nanopore long reads** (PacBio): always `--long-polisher none`.
 - Polish with reads **from the same culture** as the assembly; reads from a different stock of the same
   strain introduce that stock's variants.
 - **Ion Torrent reads are not a finishing polisher** for Nanopore assemblies: they fix most errors but
-  leave the shared homopolymer indels (96–97% of their residue) — use Illumina to finish.
+  leave the shared homopolymer indels (92–98% of their residue) — use Illumina to finish.
 
 ## Running the benchmark
 

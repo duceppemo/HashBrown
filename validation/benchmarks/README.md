@@ -56,4 +56,5 @@ conda activate HashBrown
 bash validation/benchmarks/autocycler_nonmodel_benchmark.sh /scratch/hashbrown_benchmark 32
 ```
 
-Results of all tracks, and the defaults that follow from them, are summarized in the wiki's Validation page.
+Results of all tracks, and the defaults that follow from them, are summarized in the wiki's Validation page;
+the full per-arm TSVs (re-measured 2026-11 with HashBrown 1.1.0) are committed in [`results/`](results/).

@@ -1,0 +1,4 @@
+Arm	MismatchesPer100kbp	IndelsPer100kbp	Misassemblies	NGA50	TotalLength	Contigs
+none	19.12	5.45	8	1446352	4315854	1
+medaka_sup_v4.3.0	19.10	5.22	8	1446353	4315868	1
+medaka_bacterial	19.10	4.64	8	1446363	4315903	1
