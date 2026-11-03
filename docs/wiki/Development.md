@@ -39,8 +39,10 @@ must update its stub to match the real program's behaviour.
   builds the wheel/sdist, and creates a GitHub release with the matching `CHANGELOG.md` section.
 
 Releasing: bump the version in `hashbrown/__init__.py` **and** `pyproject.toml`, date the section in
-`CHANGELOG.md`, update `CITATION.cff`, then `git tag v<version> && git push --tags`. For bioconda, update
-`recipe/meta.yaml` with the new tarball sha256 and submit to bioconda-recipes.
+`CHANGELOG.md`, update `CITATION.cff`, then `git tag v<version> && git push --tags`. The tag push also
+publishes `hashbrown-assembly` to PyPI (`publish.yml`, trusted publishing). Bioconda picks the new
+GitHub release up by itself (BiocondaBot's autobump PR); update `recipe/meta.yaml`'s version and tarball
+sha256 here to keep the repo copy in step.
 
 ## Adding an assembler or polisher
 
