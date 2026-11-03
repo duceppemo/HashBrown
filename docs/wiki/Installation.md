@@ -3,7 +3,19 @@
 HashBrown is a Python package (≥ 3.10) that drives command-line bioinformatics programs. The package needs
 only `psutil`; the programs come from [bioconda](https://bioconda.github.io/).
 
-## With conda (recommended)
+## From bioconda (recommended)
+
+```bash
+conda create -n hashbrown -c conda-forge -c bioconda hashbrown
+conda activate hashbrown
+
+hashbrown --version
+```
+
+The [bioconda package](https://anaconda.org/bioconda/hashbrown) installs HashBrown together with every
+core program the three pipelines use; nothing else is needed for assembly, polishing and the base report.
+
+## From source
 
 ```bash
 git clone https://github.com/duceppemo/HashBrown

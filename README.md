@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://github.com/duceppemo/HashBrown/actions/workflows/ci.yml"><img src="https://github.com/duceppemo/HashBrown/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://codecov.io/gh/duceppemo/HashBrown"><img src="https://codecov.io/gh/duceppemo/HashBrown/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://anaconda.org/bioconda/hashbrown"><img src="https://img.shields.io/conda/vn/bioconda/hashbrown" alt="Bioconda"></a>
   <a href="https://pypi.org/project/hashbrown-assembly/"><img src="https://img.shields.io/pypi/v/hashbrown-assembly" alt="PyPI"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+">
   <a href="https://github.com/duceppemo/HashBrown/blob/main/LICENSE"><img src="https://img.shields.io/github/license/duceppemo/HashBrown" alt="License: MIT"></a>
@@ -34,10 +35,8 @@ conflicted with the short-read tools; one conda environment now covers everythin
 ## Quick start
 
 ```bash
-git clone https://github.com/duceppemo/HashBrown
-cd HashBrown
-conda env create -f environment.yml && conda activate HashBrown
-pip install .
+conda create -n hashbrown -c conda-forge -c bioconda hashbrown
+conda activate hashbrown
 
 # Long reads only
 hashbrown -l nanopore_fastq/ -o results/
@@ -49,8 +48,11 @@ hashbrown -l nanopore_fastq/ -s illumina_fastq/ -o results/
 hashbrown -s illumina_fastq/ -o results/ -a skesa
 ```
 
-The package is also on PyPI as [`hashbrown-assembly`](https://pypi.org/project/hashbrown-assembly/)
-(`pip install hashbrown-assembly`); the conda environment still provides the bioinformatics programs.
+The [bioconda package](https://anaconda.org/bioconda/hashbrown) brings the whole core toolchain with it.
+The Python package alone is on PyPI as
+[`hashbrown-assembly`](https://pypi.org/project/hashbrown-assembly/) (`pip install hashbrown-assembly`),
+and a source install (`git clone` + `conda env create -f environment.yml` + `pip install .`) works too —
+see the wiki's [Installation](https://github.com/duceppemo/HashBrown/wiki/Installation) page.
 
 Each long-read fastq file is one sample. Short-read files pair on `_R1`/`_R2` in the name; a file without
 either is a single-end sample. The sample name is everything before the first underscore, and in hybrid
