@@ -51,7 +51,7 @@ installed** (any missing one is reported as "skipped" with the install hint, nev
 
 | Tool | Adds to the report | Install |
 | --- | --- | --- |
-| [pycoQC-ng](https://github.com/duceppemo/pycoqc-ng) | per-stage read QC pages, both platforms | `pip install pycoqc-ng` |
+| [pycoQC-ng](https://github.com/duceppemo/pycoqc-ng) | per-stage read QC pages, both platforms | `conda install -c bioconda pycoqc-ng` |
 | WeasyPrint | the PDF twin of the report | `conda install weasyprint` |
 | dnaapler | final assemblies reoriented to *dnaA*/*rep* | `conda install dnaapler` |
 | Merqury | consensus QV per assembly stage (short-read k-mers) | `conda install merqury` |

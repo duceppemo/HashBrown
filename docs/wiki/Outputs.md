@@ -42,7 +42,7 @@ output/
     ├── <sample>.pdf               print twin of the HTML (needs WeasyPrint, skipped otherwise)
     ├── tables/                    every report table as TSV
     ├── qc/<sample>/               raw outputs of the optional modules (CheckM2, BUSCO, Merqury, ANI)
-    └── pycoqc/                    per-stage pycoQC-ng reports (needs pip install pycoqc-ng)
+    └── pycoqc/                    per-stage pycoQC-ng reports (needs the pycoqc-ng package: bioconda or pip)
 ```
 
 When [dnaapler](https://github.com/gbouras13/dnaapler) is installed, the final assembly of each sample is

@@ -2,7 +2,7 @@
 # that of the GitHub tarball for tag v{{ version }} (curl -sL <url> | sha256sum). For a new release: bump
 # `version`, recompute the sha256, and reset `number` to 0.
 {% set name = "hashbrown" %}
-{% set version = "1.1.0" %}
+{% set version = "1.1.1" %}
 
 package:
   name: {{ name }}
@@ -10,7 +10,7 @@ package:
 
 source:
   url: https://github.com/duceppemo/HashBrown/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 03b1a7e60df4f4f0232d686347595f4e82ed2b89dcb3b5953afa4bb296f68c13
+  sha256: bc736b1631c9409383b6d7537e15e04508affcdec0714f5cdf7b360f760a7c9a
 
 build:
   number: 0
